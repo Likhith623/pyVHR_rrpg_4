@@ -50,6 +50,6 @@ FEATURE_WINDOW_SECONDS = 10
 FEATURE_STRIDE_SECONDS = 5
 
 # ─── Kaggle Dataset Paths ─────────────────────────────────────────
-KAGGLE_DATASET_ROOT = "/kaggle/input/datasets/likhithvasireddy/deepfake-video-dataset-dip/content/drive/MyDrive/face_dataset_dip"
-KAGGLE_REAL_DIR = f"{KAGGLE_DATASET_ROOT}/real_videos"
-KAGGLE_FAKE_DIR = f"{KAGGLE_DATASET_ROOT}/deepfake_videos"
+KAGGLE_DATASET_ROOT = "/kaggle/input/face-dataset-dip"
+KAGGLE_REAL_DIR = f"{KAGGLE_DATASET_ROOT}/real"
+KAGGLE_FAKE_DIR = f"{KAGGLE_DATASET_ROOT}/deepfake"

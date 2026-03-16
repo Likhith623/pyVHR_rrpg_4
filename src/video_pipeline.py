@@ -4,9 +4,7 @@ Use Case 2: Video Deepfake Detection — Feature Extraction Pipeline
 Processes video files (real/fake), extracts 35 rPPG features per video,
 and saves the feature matrix + labels as .npy / .csv for ML training.
 
-This is designed to run on Kaggle with the dataset at:
-  /kaggle/input/datasets/likhithvasireddy/deepfake-video-dataset-dip/
-  content/drive/MyDrive/face_dataset_dip/{real_videos, deepfake_videos}
+Designed for Kaggle dataset at: /kaggle/input/face-dataset-dip/{real, deepfake}
 """
 import os
 import sys
@@ -32,7 +30,17 @@ from src.rppg_extractor import (
 from src.feature_extractor import extract_features, FEATURE_NAMES
 
 
-def extract_features_from_video(video_path, method="GREEN", max_frames=900):
+# Module-level shared FaceMesh — reused across all videos
+_FACE_MESH = mp.solutions.face_mesh.FaceMesh(
+    static_image_mode=False,
+    max_num_faces=1,
+    refine_landmarks=False,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5,
+)
+
+
+def extract_features_from_video(video_path, method="GREEN", max_frames=300):
     """
     Process a single video file and extract rPPG features.
 
@@ -47,7 +55,7 @@ def extract_features_from_video(video_path, method="GREEN", max_frames=900):
     Args:
         video_path: path to video file
         method: rPPG method name
-        max_frames: cap on frames to process (avoid OOM)
+        max_frames: cap on frames to process (300 = ~10s at 30fps)
 
     Returns:
         features: (35,) numpy array or None on failure
@@ -61,16 +69,6 @@ def extract_features_from_video(video_path, method="GREEN", max_frames=900):
     if fps <= 0 or fps > 120:
         fps = 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    # Initialize MediaPipe (per-video to avoid memory leaks)
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(
-        static_image_mode=False,
-        max_num_faces=1,
-        refine_landmarks=True,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
-    )
 
     rgb_forehead = []
     rgb_left_cheek = []
@@ -86,7 +84,7 @@ def extract_features_from_video(video_path, method="GREEN", max_frames=900):
 
         frame_h, frame_w = frame.shape[:2]
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(rgb_frame)
+        results = _FACE_MESH.process(rgb_frame)
 
         if results.multi_face_landmarks:
             landmarks = results.multi_face_landmarks[0]
@@ -101,7 +99,6 @@ def extract_features_from_video(video_path, method="GREEN", max_frames=900):
                 frames_with_face += 1
 
     cap.release()
-    face_mesh.close()
 
     metadata = {
         "video": os.path.basename(video_path),
@@ -135,7 +132,7 @@ def extract_features_from_video(video_path, method="GREEN", max_frames=900):
 
 
 def process_dataset(real_dir=None, fake_dir=None, method="GREEN",
-                    max_frames=900, output_dir="./output"):
+                    max_frames=300, output_dir="./output"):
     """
     Process entire dataset: extract features from all real and fake videos.
 

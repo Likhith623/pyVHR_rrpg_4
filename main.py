@@ -47,8 +47,8 @@ Examples:
     extract_parser.add_argument("--method", type=str, default="GREEN",
                                 choices=["GREEN", "CHROM", "POS"],
                                 help="rPPG extraction method")
-    extract_parser.add_argument("--max-frames", type=int, default=900,
-                                help="Max frames per video")
+    extract_parser.add_argument("--max-frames", type=int, default=300,
+                                help="Max frames per video (300 = ~10s at 30fps)")
 
     args = parser.parse_args()
 
