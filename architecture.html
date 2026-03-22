@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeuroPulse: Multi-Modal Deepfake Detection System</title>
+<style>
+  :root {
+    --primary:   #1a237e;
+    --accent:    #0d47a1;
+    --highlight: #1565c0;
+    --teal:      #00695c;
+    --orange:    #e65100;
+    --purple:    #4a148c;
+    --green:     #1b5e20;
+    --red:       #b71c1c;
+    --gold:      #f57f17;
+    --bg:        #fafbff;
+    --card:      #ffffff;
+    --border:    #e3e8f0;
+    --text:      #1a1a2e;
+    --muted:     #546e7a;
+    --shadow:    0 4px 24px rgba(26,35,126,0.10);
+    --shadow-lg: 0 8px 40px rgba(26,35,126,0.16);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0d1b6e 0%, #1565c0 50%, #0d47a1 100%);
+    color: #fff;
+    padding: 72px 40px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    padding: 6px 20px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    backdrop-filter: blur(4px);
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .hero h1 span { color: #90caf9; }
+  .hero p {
+    font-size: 17px;
+    opacity: 0.85;
+    max-width: 720px;
+    margin: 0 auto 32px;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 36px; }
+  .hero-tag {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .hero-stats {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 14px 24px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+  }
+  .hero-stat strong { display: block; font-size: 24px; font-weight: 800; color: #90caf9; }
+  .hero-stat span { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+  .section { padding: 60px 0 40px; }
+  .section + .section { border-top: 1px solid var(--border); }
+
+  /* ── SECTION HEADING ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--highlight);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 700px;
+    margin-bottom: 36px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .card-grid { display: grid; gap: 20px; }
+  .card-grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .card-grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card-grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+  /* ── MODEL CARDS ── */
+  .model-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .model-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .model-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .model-card.rppg::before  { background: linear-gradient(90deg, #00695c, #26a69a); }
+  .model-card.eff::before   { background: linear-gradient(90deg, #1565c0, #42a5f5); }
+  .model-card.xcep::before  { background: linear-gradient(90deg, #4a148c, #9c27b0); }
+  .model-card.swin::before  { background: linear-gradient(90deg, #e65100, #ff9800); }
+  .model-card h3 { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+  .model-card .model-type {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 14px; padding: 3px 10px; border-radius: 20px; display: inline-block;
+  }
+  .rppg  .model-type { background: #e0f2f1; color: #00695c; }
+  .eff   .model-type { background: #e3f2fd; color: #1565c0; }
+  .xcep  .model-type { background: #f3e5f5; color: #4a148c; }
+  .swin  .model-type { background: #fff3e0; color: #e65100; }
+  .model-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .model-stat {
+    background: #f8faff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+  .model-stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .model-stat .value { font-size: 14px; font-weight: 700; color: var(--primary); }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); }
+  thead { background: linear-gradient(90deg, #1a237e, #1565c0); color: #fff; }
+  thead th { padding: 14px 18px; font-size: 12px; font-weight: 700; text-align: left; letter-spacing: 1px; text-transform: uppercase; }
+  tbody tr:nth-child(even) { background: #f8faff; }
+  tbody tr:hover { background: #e8f0fe; }
+  td { padding: 13px 18px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  td code { background: #e8f0fe; color: var(--primary); padding: 2px 7px; border-radius: 5px; font-size: 12px; }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .badge-blue   { background: #e3f2fd; color: #1565c0; }
+  .badge-green  { background: #e8f5e9; color: #2e7d32; }
+  .badge-purple { background: #f3e5f5; color: #6a1b9a; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+  .badge-teal   { background: #e0f2f1; color: #00695c; }
+
+  /* ── FLOWCHART WRAPPER ── */
+  .fc-section {
+    margin-bottom: 56px;
+  }
+  .fc-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .fc-num {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #fff;
+    flex-shrink: 0;
+  }
+  .fc-header h2 { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .fc-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .fc-wrapper {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 24px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+
+  /* ── PIPELINE STEPS ── */
+  .pipe { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; margin: 20px 0; }
+  .pipe-step {
+    flex: 1; min-width: 120px;
+    background: #f0f4ff;
+    border: 1.5px solid #c5cfe8;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 12px; font-weight: 600;
+    position: relative;
+  }
+  .pipe-step + .pipe-step { margin-left: 28px; }
+  .pipe-step + .pipe-step::before {
+    content: '→';
+    position: absolute; left: -20px; top: 50%; transform: translateY(-50%);
+    font-size: 18px; color: #90a4ae;
+  }
+  .pipe-step .icon { font-size: 22px; margin-bottom: 6px; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+    border: 1px solid #90caf9;
+    border-left: 4px solid #1565c0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: #1a237e;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+  /* ── CODE STYLE ── */
+  .code-block {
+    background: #1a1a2e;
+    color: #e8eaf6;
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  .code-block .kw   { color: #82b1ff; }
+  .code-block .str  { color: #a5d6a7; }
+  .code-block .num  { color: #ffcc80; }
+  .code-block .cmt  { color: #546e7a; font-style: italic; }
+
+  /* ── DATASET TABLE ── */
+  .ds-chip {
+    background: linear-gradient(135deg, #1a237e 0%, #1565c0 100%);
+    color: #fff;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #0d1b6e;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    padding: 36px 28px;
+    font-size: 13px;
+  }
+  footer strong { color: #90caf9; }
+
+  /* ── UTIL ── */
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  ul.feature-list { list-style: none; padding: 0; }
+  ul.feature-list li { padding: 5px 0; font-size: 13px; display: flex; gap: 10px; }
+  ul.feature-list li::before { content: '▸'; color: var(--highlight); flex-shrink: 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ HERO -->
+<header class="hero">
+  <div class="hero-badge">Research Paper · Deep Learning · Computer Vision</div>
+  <h1>NeuroPulse: <span>Multi-Modal Deepfake Detection</span><br>via Spatio-Temporal &amp; Physiological Fusion</h1>
+  <p>A rigorous four-stream ensemble architecture combining Remote Photoplethysmography signal analysis, EfficientNet-B4, Xception, and Swin Transformer spatio-temporal models for state-of-the-art deepfake video detection.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">PyTorch 2.4</span>
+    <span class="hero-tag">MediaPipe FaceMesh</span>
+    <span class="hero-tag">FaceForensics++</span>
+    <span class="hero-tag">Celeb-DF v2</span>
+    <span class="hero-tag">DFDC</span>
+    <span class="hero-tag">Stochastic Weight Averaging</span>
+    <span class="hero-tag">Identity-Aware Splitting</span>
+    <span class="hero-tag">Focal Loss</span>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>4</strong><span>Model Streams</span></div>
+    <div class="hero-stat"><strong>117+</strong><span>rPPG Features</span></div>
+    <div class="hero-stat"><strong>5-Fold</strong><span>Identity-Aware CV</span></div>
+    <div class="hero-stat"><strong>6-Pass</strong><span>Test-Time Augmentation</span></div>
+    <div class="hero-stat"><strong>4 Datasets</strong><span>FF++ · CelebDF · DFDC · Custom</span></div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════ TOC -->
+<section class="section">
+  <div class="section-label">Navigation</div>
+  <div class="section-title">Table of Contents</div>
+  <div class="card-grid card-grid-2">
+    <div class="card" style="padding:20px 24px;">
+      <ul class="feature-list">
+        <li><a href="#overview">System Overview</a></li>
+        <li><a href="#datasets">Datasets &amp; Pre-processing</a></li>
+        <li><a href="#model1">Model 1 — rPPG + ML Stacking</a></li>
+        <li><a href="#model2">Model 2 — EfficientNet-B4 BiLSTM</a></li>
+      </ul>
+    </div>
+    <div class="card" style="padding:20px 24px;">
+      <ul class="feature-list">
+        <li><a href="#model3">Model 3 — Xception + Frequency Branch</a></li>
+        <li><a href="#model4">Model 4 — Swin Transformer + DCT</a></li>
+        <li><a href="#ensemble">Late-Fusion Ensemble</a></li>
+        <li><a href="#outputs">Outputs &amp; Reproducibility</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ OVERVIEW -->
+<section class="section" id="overview">
+  <div class="section-label">Architecture</div>
+  <div class="section-title">System Overview</div>
+  <div class="section-sub">
+    NeuroPulse employs a <strong>dual-stream paradigm</strong>: a physiological stream grounded in biological signal analysis, 
+    and three independent spatio-temporal CNN streams. All four models are trained on the same 
+    <em>master_dataset_index.csv</em> with identity-aware cross-validation to prevent data leakage, 
+    then fused via late-stage probability aggregation.
+  </div>
+  <div class="card-grid card-grid-4">
+    <div class="model-card rppg">
+      <div class="model-type">Physiological</div>
+      <h3>rPPG + ML Stacking</h3>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">MediaPipe FaceMesh → CHROM rPPG → 117-feature extraction → XGB+LGB+HGB Stacking Ensemble</p>
+      <div class="model-stat-grid">
+        <div class="model-stat"><div class="label">Features</div><div class="value">117</div></div>
+        <div class="model-stat"><div class="label">ROI Regions</div><div class="value">9</div></div>
+        <div class="model-stat"><div class="label">Max Frames</div><div class="value">60</div></div>
+        <div class="model-stat"><div class="label">Output</div><div class="value">P_rPPG</div></div>
+      </div>
+    </div>
+    <div class="model-card eff">
+      <div class="model-type">Spatial-Temporal</div>
+      <h3>EfficientNet-B4</h3>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">MTCNN face detection → EfficientNet-B4 → BiLSTM (2L, 256H) → Multi-Head Attention → Binary</p>
+      <div class="model-stat-grid">
+        <div class="model-stat"><div class="label">Backbone</div><div class="value">EffNet-B4</div></div>
+        <div class="model-stat"><div class="label">Frames</div><div class="value">16</div></div>
+        <div class="model-stat"><div class="label">Img Size</div><div class="value">224²</div></div>
+        <div class="model-stat"><div class="label">TTA Passes</div><div class="value">5</div></div>
+      </div>
+    </div>
+    <div class="model-card xcep">
+      <div class="model-type">Spatial-Temporal</div>
+      <h3>Xception + Freq Branch</h3>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">MTCNN + Alignment → Xception (2048d) + ECA + Freq Branch → BiLSTM → Fused Binary</p>
+      <div class="model-stat-grid">
+        <div class="model-stat"><div class="label">Backbone</div><div class="value">Xception</div></div>
+        <div class="model-stat"><div class="label">Img Size</div><div class="value">299²</div></div>
+        <div class="model-stat"><div class="label">Fused Dim</div><div class="value">768</div></div>
+        <div class="model-stat"><div class="label">TTA Passes</div><div class="value">6</div></div>
+      </div>
+    </div>
+    <div class="model-card swin">
+      <div class="model-type">Transformer</div>
+      <h3>Swin-Tiny + DCT</h3>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">MTCNN + Alignment → Swin-Tiny (768d) + ECA + DCT 128-dim → pack_padded BiLSTM → Binary</p>
+      <div class="model-stat-grid">
+        <div class="model-stat"><div class="label">Backbone</div><div class="value">Swin-Tiny</div></div>
+        <div class="model-stat"><div class="label">Feat Dim</div><div class="value">768</div></div>
+        <div class="model-stat"><div class="label">K-Folds</div><div class="value">5</div></div>
+        <div class="model-stat"><div class="label">TTA Passes</div><div class="value">6</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ DATASETS -->
+<section class="section" id="datasets">
+  <div class="section-label">Data</div>
+  <div class="section-title">Datasets &amp; Unified Pre-Processing</div>
+  <div class="section-sub">
+    All four models consume a single <code>master_dataset_index.csv</code> compiled once by a unified data compiler.
+    This guarantees identical video-level alignment across all streams for leakage-free late fusion.
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Dataset</th><th>Subset</th><th>Label</th><th>Max Samples</th><th>Identity Pattern</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="ds-chip">FaceForensics++</span></td><td>Original</td><td><span class="badge badge-green">Real</span></td><td>200</td><td><code>FF_person_{id}</code></td></tr>
+        <tr><td><span class="ds-chip">FaceForensics++</span></td><td>Deepfakes, Face2Face, FaceSwap, NeuralTextures, FaceShifter, DeepFakeDetection</td><td><span class="badge badge-orange">Fake</span></td><td>200 each</td><td><code>FF_person_{id}</code></td></tr>
+        <tr><td><span class="ds-chip">Celeb-DF v2</span></td><td>Celeb-real + YouTube-real</td><td><span class="badge badge-green">Real</span></td><td>150 + 50</td><td><code>Celeb_person_{id}</code></td></tr>
+        <tr><td><span class="ds-chip">Celeb-DF v2</span></td><td>Celeb-synthesis</td><td><span class="badge badge-orange">Fake</span></td><td>200</td><td><code>Celeb_person_{id}</code></td></tr>
+        <tr><td><span class="ds-chip">Custom Dataset</span></td><td>real_videos / deepfake_videos</td><td><span class="badge badge-green">Real</span> / <span class="badge badge-orange">Fake</span></td><td>400 each</td><td><code>Custom_person_{id}</code></td></tr>
+        <tr><td><span class="ds-chip">DFDC Sample</span></td><td>metadata.json driven</td><td><span class="badge badge-green">Real</span> / <span class="badge badge-orange">Fake</span></td><td>Balanced</td><td><code>DFDC_{basename}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box mt-16">
+    <strong>🔒 Identity-Aware Splitting — Critical Anti-Leakage Design</strong>
+    All splits use <code>StratifiedGroupKFold</code> where groups are <em>person identities</em> extracted from filenames.
+    This guarantees that no person's real and fake clips appear in both train and validation, preventing face-memorisation
+    (the primary source of inflated metrics in deepfake literature). This design is required by IEEE T-IFS, CVPR, and top security venues.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FLOWCHART 1: rPPG
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="model1">
+  <div class="section-label">Model 1 of 4</div>
+  <div class="section-title">rPPG-Based Physiological Detection + ML Stacking</div>
+  <div class="section-sub">
+    Inspired by FakeCatcher (CVPR 2023), this stream extracts <strong>remote photoplethysmography (rPPG)</strong> signals
+    from 9 precisely-defined facial regions using MediaPipe FaceMesh's 468 facial landmarks.
+    Deepfakes lack coherent biological blood-flow patterns, making physiological inconsistencies a powerful discriminator.
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-header">
+      <div class="fc-num" style="background:linear-gradient(135deg,#00695c,#26a69a);">1</div>
+      <div>
+        <h2>rPPG Signal Extraction &amp; ML Pipeline Flowchart</h2>
+        <p>CHROM-based physiological feature extraction → 117-dimensional feature vector → Stacking Ensemble classifier</p>
+      </div>
+    </div>
+    <div class="fc-wrapper">
+<svg viewBox="0 0 1060 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">
+  <defs>
+    <marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#546e7a"/>
+    </marker>
+    <filter id="dropshadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a237e" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="530" y="30" text-anchor="middle" font-size="15" font-weight="800" fill="#1a237e">rPPG Physiological Feature Extraction Pipeline</text>
+
+  <!-- ROW 1: Input -->
+  <rect x="400" y="50" width="260" height="60" rx="12" fill="#e0f2f1" stroke="#00695c" stroke-width="2" filter="url(#dropshadow)"/>
+  <text x="530" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#00695c">🎬 Input Video</text>
+  <text x="530" y="95" text-anchor="middle" font-size="11" fill="#004d40">MP4/AVI/MOV/MKV/WEBM · max 60 frames</text>
+
+  <!-- Arrow down -->
+  <line x1="530" y1="110" x2="530" y2="138" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- ROW 2: Face Mesh -->
+  <rect x="370" y="140" width="320" height="60" rx="12" fill="#b2dfdb" stroke="#00695c" stroke-width="2" filter="url(#dropshadow)"/>
+  <text x="530" y="166" text-anchor="middle" font-size="13" font-weight="700" fill="#004d40">MediaPipe FaceMesh</text>
+  <text x="530" y="185" text-anchor="middle" font-size="11" fill="#004d40">468 facial landmarks · static_image_mode=False · 0.5 confidence threshold</text>
+
+  <!-- Arrow down -->
+  <line x1="530" y1="200" x2="530" y2="228" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- ROW 3: 9 ROI boxes -->
+  <text x="530" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">9 Facial ROI Regions (ConvexHull Masking)</text>
+
+  <!-- 9 ROI boxes -->
+  <rect x="20"  y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="74"  y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Forehead</text>
+  <text x="74"  y="293" text-anchor="middle" font-size="9"  fill="#00695c">36 landmarks</text>
+
+  <rect x="140" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="194" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Left Cheek</text>
+  <text x="194" y="293" text-anchor="middle" font-size="9"  fill="#00695c">15 landmarks</text>
+
+  <rect x="260" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="314" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Right Cheek</text>
+  <text x="314" y="293" text-anchor="middle" font-size="9"  fill="#00695c">15 landmarks</text>
+
+  <rect x="380" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="434" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Chin</text>
+  <text x="434" y="293" text-anchor="middle" font-size="9"  fill="#00695c">12 landmarks</text>
+
+  <rect x="500" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="554" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Nose</text>
+  <text x="554" y="293" text-anchor="middle" font-size="9"  fill="#00695c">12 landmarks</text>
+
+  <rect x="620" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="674" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">Left/Right Jaw</text>
+  <text x="674" y="293" text-anchor="middle" font-size="9"  fill="#00695c">9+10 landmarks</text>
+
+  <rect x="740" y="258" width="108" height="46" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="794" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#004d40">L/R Forehead</text>
+  <text x="794" y="293" text-anchor="middle" font-size="9"  fill="#00695c">10+11 landmarks</text>
+
+  <rect x="860" y="258" width="168" height="46" rx="8" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="944" y="277" text-anchor="middle" font-size="10" font-weight="600" fill="#e65100">EfficientNet-B0</text>
+  <text x="944" y="293" text-anchor="middle" font-size="9"  fill="#bf360c">1280-dim face features</text>
+
+  <!-- Convergence arrows to rPPG signal box -->
+  <line x1="74"  y1="304" x2="74"  y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="194" y1="304" x2="194" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="314" y1="304" x2="314" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="434" y1="304" x2="434" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="554" y1="304" x2="554" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="674" y1="304" x2="674" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="794" y1="304" x2="794" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+
+  <!-- Horizontal lines connecting to funnel -->
+  <line x1="74"  y1="340" x2="794" y2="340" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="434" y1="340" x2="434" y2="365" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- ROW 4: CHROM rPPG Signal Processing -->
+  <rect x="260" y="366" width="540" height="64" rx="12" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" filter="url(#dropshadow)"/>
+  <text x="530" y="391" text-anchor="middle" font-size="13" font-weight="700" fill="#1b5e20">CHROM rPPG Signal Processing</text>
+  <text x="530" y="408" text-anchor="middle" font-size="11" fill="#2e7d32">Per-window mean normalisation · Overlap-Add accumulation · Bandpass filter [0.7–4.0 Hz, order 3]</text>
+  <text x="530" y="423" text-anchor="middle" font-size="10" fill="#388e3c">Methods: CHROM (primary) · GREEN · POS  · Detrend (linear) · Welch PSD (nfft=1024)</text>
+
+  <!-- Arrow down -->
+  <line x1="530" y1="430" x2="530" y2="455" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- ROW 5: Feature Extraction boxes -->
+  <text x="530" y="473" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">117-Dimensional Feature Extraction</text>
+
+  <rect x="20"  y="482" width="195" height="52" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="117" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#1b5e20">Spectral (per ROI)</text>
+  <text x="117" y="516" text-anchor="middle" font-size="9"  fill="#2e7d32">SNR · Purity · Entropy · Centroid</text>
+  <text x="117" y="529" text-anchor="middle" font-size="9"  fill="#2e7d32">Dominant Freq · Harmonic Ratio</text>
+
+  <rect x="228" y="482" width="195" height="52" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="325" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#1b5e20">HRV Features</text>
+  <text x="325" y="516" text-anchor="middle" font-size="9"  fill="#2e7d32">RMSSD · SDNN · pNN50 · pNN20</text>
+  <text x="325" y="529" text-anchor="middle" font-size="9"  fill="#2e7d32">LF/HF Power · LF/HF Ratio</text>
+
+  <rect x="436" y="482" width="195" height="52" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="533" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#1b5e20">Cross-ROI Correlation</text>
+  <text x="533" y="516" text-anchor="middle" font-size="9"  fill="#2e7d32">Pearson corr · Spectral coherence</text>
+  <text x="533" y="529" text-anchor="middle" font-size="9"  fill="#2e7d32">Phase sync · BPM variance</text>
+
+  <rect x="644" y="482" width="195" height="52" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="741" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#1b5e20">Geometry (26) + Signal Quality</text>
+  <text x="741" y="516" text-anchor="middle" font-size="9"  fill="#2e7d32">Eye/nose/mouth ratios · Jaw symmetry</text>
+  <text x="741" y="529" text-anchor="middle" font-size="9"  fill="#2e7d32">Energy · Entropy · Crest factor</text>
+
+  <!-- Convergence to ML -->
+  <line x1="117" y1="534" x2="117" y2="562" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="325" y1="534" x2="325" y2="562" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="533" y1="534" x2="533" y2="562" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="741" y1="534" x2="741" y2="562" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="117" y1="562" x2="741" y2="562" stroke="#546e7a" stroke-width="1" opacity="0.6"/>
+  <line x1="429" y1="562" x2="429" y2="580" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- ROW 6: ML Pipeline -->
+  <rect x="180" y="580" width="500" height="64" rx="12" fill="#e8eaf6" stroke="#3949ab" stroke-width="2" filter="url(#dropshadow)"/>
+  <text x="430" y="604" text-anchor="middle" font-size="13" font-weight="700" fill="#1a237e">Stacking Ensemble ML Pipeline</text>
+  <text x="430" y="622" text-anchor="middle" font-size="11" fill="#283593">RobustScaler → ExtraTrees Selector (1.2×mean) → Base: XGBoost + LightGBM + HistGradBoost</text>
+  <text x="430" y="638" text-anchor="middle" font-size="10" fill="#3949ab">Meta-learner: Logistic Regression · GroupShuffleSplit 80/20 · 5-fold CV</text>
+
+  <!-- Arrow to output -->
+  <line x1="430" y1="644" x2="430" y2="672" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- OUTPUT -->
+  <rect x="310" y="673" width="240" height="44" rx="22" fill="#00695c" stroke="#004d40" stroke-width="2" filter="url(#dropshadow)"/>
+  <text x="430" y="692" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">OUTPUT: P_rPPG</text>
+  <text x="430" y="710" text-anchor="middle" font-size="10" fill="#b2dfdb">rppg_predictions.csv · P(Fake) ∈ [0,1]</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="two-col mt-24">
+    <div class="card">
+      <h3 style="color:var(--teal);margin-bottom:12px;">🧬 rPPG Signal Processing Details</h3>
+      <ul class="feature-list">
+        <li>CHROM algorithm: per-window mean normalisation, overlap-add accumulation (de Haan &amp; Jeanne, 2013)</li>
+        <li>Bandpass filter: Butterworth 3rd-order, 0.7–4.0 Hz (cardiac frequency range)</li>
+        <li>Frame sampling: np.linspace across video duration, max 60 frames</li>
+        <li>Quality gate: Laplacian variance ≥ 10 and face area ≥ 1000 px²</li>
+        <li>NaN interpolation: linear interpolation for &lt;30% missing ROI frames</li>
+        <li>Zero-variance coherence features dropped post-extraction (up to 6 features)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--teal);margin-bottom:12px;">⚙️ ML Pipeline Configuration</h3>
+      <ul class="feature-list">
+        <li>N_RPPG_ACTUAL = 117 (exact feature count post-coherence removal)</li>
+        <li>Feature selection threshold: "1.2×mean" ExtraTrees importance</li>
+        <li>XGBoost: n_est=300, max_depth=3, lr=0.02, λ=10, α=1, scale_pos_weight</li>
+        <li>LightGBM: n_est=300, num_leaves=8, lr=0.02, λ=10, α=1</li>
+        <li>HistGradBoost: max_iter=300, max_depth=5, l2=5.0, max_leaves=15</li>
+        <li>Meta-learner: LogisticRegression(class_weight='balanced', max_iter=1000)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FLOWCHART 2: EfficientNet
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="model2">
+  <div class="section-label">Model 2 of 4</div>
+  <div class="section-title">EfficientNet-B4 Spatio-Temporal CNN</div>
+  <div class="section-sub">
+    An ImageNet-pretrained EfficientNet-B4 backbone combined with a stacked BiLSTM temporal model and
+    multi-head self-attention for deepfake-discriminative inter-frame dependency modelling.
+    SWA and gradual backbone unfreezing ensure stable convergence on the P100 GPU.
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-header">
+      <div class="fc-num" style="background:linear-gradient(135deg,#1565c0,#42a5f5);">2</div>
+      <div>
+        <h2>EfficientNet-B4 Spatio-Temporal Architecture Flowchart</h2>
+        <p>MTCNN face detection → frame caching → EfficientNet-B4 spatial features → BiLSTM+Attention → binary classification</p>
+      </div>
+    </div>
+    <div class="fc-wrapper">
+<svg viewBox="0 0 1060 660" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">
+  <defs>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#546e7a"/>
+    </marker>
+    <filter id="ds2">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a237e" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="530" y="28" text-anchor="middle" font-size="15" font-weight="800" fill="#1a237e">EfficientNet-B4 Spatio-Temporal Pipeline</text>
+
+  <!-- Input -->
+  <rect x="390" y="42" width="280" height="54" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="2" filter="url(#ds2)"/>
+  <text x="530" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#0d47a1">🎬 Input Video</text>
+  <text x="530" y="84" text-anchor="middle" font-size="11" fill="#1565c0">Loaded from master_dataset_index.csv</text>
+
+  <line x1="530" y1="96" x2="530" y2="122" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Face Detection -->
+  <rect x="310" y="124" width="440" height="56" rx="12" fill="#bbdefb" stroke="#1565c0" stroke-width="2" filter="url(#ds2)"/>
+  <text x="530" y="149" text-anchor="middle" font-size="13" font-weight="700" fill="#0d47a1">MTCNN Face Detector (facenet-pytorch)</text>
+  <text x="530" y="168" text-anchor="middle" font-size="11" fill="#1565c0">min_face=60px · thresholds=[0.6,0.7,0.7] · factor=0.709 · post_process=False · center-crop fallback</text>
+
+  <line x1="530" y1="180" x2="530" y2="206" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Disk Cache -->
+  <rect x="360" y="208" width="340" height="48" rx="12" fill="#e1f5fe" stroke="#0277bd" stroke-width="1.5" filter="url(#ds2)"/>
+  <text x="530" y="229" text-anchor="middle" font-size="12" font-weight="700" fill="#01579b">RAM-Safe Disk Cache (.npy per video)</text>
+  <text x="530" y="246" text-anchor="middle" font-size="10" fill="#0277bd">16 frames/video · (T,H,W,3) uint8 · skips already-cached</text>
+
+  <line x1="530" y1="256" x2="530" y2="278" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Augmentation -->
+  <rect x="200" y="280" width="660" height="56" rx="12" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5" filter="url(#ds2)"/>
+  <text x="530" y="301" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">Training Augmentation Pipeline (albumentations · same transform all T frames)</text>
+  <text x="530" y="319" text-anchor="middle" font-size="10" fill="#283593">HFlip · ShiftScaleRotate · BrightnessContrast · HueSat · RGBShift · JPEG Compression · GaussNoise · ISONoise · CoarseDropout · Posterize</text>
+  <text x="530" y="333" text-anchor="middle" font-size="9"  fill="#3949ab">ImageNet normalisation: μ=[0.485,0.456,0.406] · σ=[0.229,0.224,0.225] · 224×224px</text>
+
+  <line x1="530" y1="336" x2="530" y2="360" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- EfficientNet Backbone -->
+  <rect x="240" y="362" width="580" height="60" rx="12" fill="#1565c0" stroke="#0d47a1" stroke-width="2" filter="url(#ds2)"/>
+  <text x="530" y="386" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">EfficientNet-B4 Backbone (ImageNet pretrained)</text>
+  <text x="530" y="404" text-anchor="middle" font-size="11" fill="#bbdefb">timm · global_pool='avg' · drop_path_rate=0.2 · Frozen until epoch 5 → gradual unfreeze</text>
+  <text x="530" y="418" text-anchor="middle" font-size="10" fill="#e3f2fd">Spatial feature vector: 1792-dim · FP32 · cuDNN benchmark=False</text>
+
+  <!-- Reshape arrow -->
+  <line x1="530" y1="422" x2="530" y2="446" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="544" y="438" font-size="10" fill="#546e7a">reshape (B,T,1792)</text>
+
+  <!-- BiLSTM + Attention row -->
+  <!-- BiLSTM -->
+  <rect x="120" y="448" width="360" height="66" rx="12" fill="#1976d2" stroke="#0d47a1" stroke-width="2" filter="url(#ds2)"/>
+  <text x="300" y="472" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">BiLSTM Temporal Model</text>
+  <text x="300" y="491" text-anchor="middle" font-size="11" fill="#bbdefb">2 layers · hidden=256 · bidirectional</text>
+  <text x="300" y="507" text-anchor="middle" font-size="10" fill="#e3f2fd">→ 512-dim output per timestep · cuDNN disabled (P100)</text>
+
+  <!-- Attention -->
+  <rect x="548" y="448" width="360" height="66" rx="12" fill="#1976d2" stroke="#0d47a1" stroke-width="2" filter="url(#ds2)"/>
+  <text x="728" y="472" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Multi-Head Self-Attention</text>
+  <text x="728" y="491" text-anchor="middle" font-size="11" fill="#bbdefb">4 heads · embed_dim=512 · mask-aware pooling</text>
+  <text x="728" y="507" text-anchor="middle" font-size="10" fill="#e3f2fd">LayerNorm residual · dropout=0.5 · batch_first=True</text>
+
+  <!-- Arrow BiLSTM to Attention -->
+  <line x1="480" y1="481" x2="548" y2="481" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Arrow from attention to classifier -->
+  <line x1="728" y1="514" x2="728" y2="540" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="300" y1="514" x2="300" y2="540" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="300" y1="540" x2="728" y2="540" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="530" y1="540" x2="530" y2="558" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Classifier -->
+  <rect x="290" y="560" width="480" height="56" rx="12" fill="#0d47a1" stroke="#0a2f80" stroke-width="2" filter="url(#ds2)"/>
+  <text x="530" y="582" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Classifier Head (LayerNorm replaces BatchNorm for BATCH_SIZE=2)</text>
+  <text x="530" y="600" text-anchor="middle" font-size="11" fill="#bbdefb">Linear(512→256) → LayerNorm → GELU → Dropout(0.5) → Linear(256→128) → LayerNorm → GELU → Linear(128→1)</text>
+
+  <line x1="530" y1="616" x2="530" y2="638" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Output -->
+  <rect x="360" y="640" width="340" height="16" rx="8" fill="#1565c0" opacity="0.15"/>
+  <rect x="350" y="636" width="360" height="22" rx="11" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+  <text x="530" y="651" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">OUTPUT: P_CNN  →  cnn_predictions.csv</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="two-col mt-24">
+    <div class="card">
+      <h3 style="color:#1565c0;margin-bottom:12px;">🏋️ Training Configuration</h3>
+      <ul class="feature-list">
+        <li><strong>Epochs:</strong> 40 · LR: 5×10⁻⁵ · Weight Decay: 5×10⁻⁴</li>
+        <li><strong>Optimiser:</strong> AdamW with param-group LRs (backbone LR/10)</li>
+        <li><strong>Scheduler:</strong> Cosine warmup (10% steps) + cosine decay</li>
+        <li><strong>SWA:</strong> starts epoch 30, SWA-LR=5×10⁻⁵, 5-batch BN update</li>
+        <li><strong>Loss:</strong> Focal Loss (α=0.6, γ=2.0, label_smoothing=0.1)</li>
+        <li><strong>Grad accumulation:</strong> 4 steps → effective batch = 8</li>
+        <li><strong>Early stopping:</strong> patience=25 on validation AUC</li>
+        <li><strong>TTA:</strong> 5-pass (original, H-flip, +15 bright, −15 bright, blur)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#1565c0;margin-bottom:12px;">🔬 Model Architecture Details</h3>
+      <ul class="feature-list">
+        <li><strong>Backbone:</strong> EfficientNet-B4 (1792-dim output) via timm</li>
+        <li><strong>Temporal:</strong> 2-layer BiLSTM, hidden=256, output=512</li>
+        <li><strong>Attention:</strong> 4-head MHA, batch_first=True, residual+LayerNorm</li>
+        <li><strong>Mask handling:</strong> padding mask propagated through LSTM+MHA</li>
+        <li><strong>P100 fix:</strong> cuDNN disabled for LSTM, no AMP/autocast</li>
+        <li><strong>Splits:</strong> 5-fold StratifiedGroupKFold (identity-aware)</li>
+        <li><strong>Backbone unfreeze:</strong> epoch 5, then LR ramped over 3 epochs</li>
+        <li><strong>Output file:</strong> <code>cnn_predictions.csv</code> (col: P_CNN)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FLOWCHART 3: Xception
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="model3">
+  <div class="section-label">Model 3 of 4</div>
+  <div class="section-title">Xception + Frequency Branch + Hard Negative Mining</div>
+  <div class="section-sub">
+    The Xception backbone (2048-dim output) is augmented with a parallel frequency branch that extracts DCT and FFT
+    compression artifacts. ECA channel attention re-weights spatial features. CutMix and hard-negative mining curriculum 
+    force the model to detect local manipulation boundaries rather than global statistics.
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-header">
+      <div class="fc-num" style="background:linear-gradient(135deg,#4a148c,#9c27b0);">3</div>
+      <div>
+        <h2>Xception Spatio-Temporal + Frequency Architecture Flowchart</h2>
+        <p>Eye-aligned MTCNN → Xception (2048d) + ECA → Frequency Branch → BiLSTM → Fused Classifier</p>
+      </div>
+    </div>
+    <div class="fc-wrapper">
+<svg viewBox="0 0 1060 700" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">
+  <defs>
+    <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#546e7a"/>
+    </marker>
+    <filter id="ds3"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#4a148c" flood-opacity="0.10"/></filter>
+  </defs>
+
+  <text x="530" y="26" text-anchor="middle" font-size="15" font-weight="800" fill="#1a237e">Xception Dual-Branch Spatio-Temporal Pipeline</text>
+
+  <!-- Input -->
+  <rect x="390" y="40" width="280" height="50" rx="12" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" filter="url(#ds3)"/>
+  <text x="530" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#4a148c">🎬 Input Video</text>
+  <text x="530" y="80" text-anchor="middle" font-size="11" fill="#6a1b9a">299×299 target resolution (Xception native)</text>
+
+  <line x1="530" y1="90" x2="530" y2="114" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- MTCNN + Alignment -->
+  <rect x="280" y="116" width="500" height="60" rx="12" fill="#e1bee7" stroke="#7b1fa2" stroke-width="2" filter="url(#ds3)"/>
+  <text x="530" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#4a148c">MTCNN + Eye-Landmark Alignment</text>
+  <text x="530" y="158" text-anchor="middle" font-size="11" fill="#6a1b9a">Detect eye landmarks → compute angle → warpAffine rotation → Laplacian blur filter (threshold 20.0)</text>
+  <text x="530" y="173" text-anchor="middle" font-size="9"  fill="#7b1fa2">Quality gate: Laplacian var ≥ 20  · Confidence ≥ 0.9  ·  Center-crop fallback</text>
+
+  <line x1="530" y1="176" x2="530" y2="200" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- Training Augmentation -->
+  <rect x="150" y="202" width="760" height="52" rx="12" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="530" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#4a148c">Augmentation + MixUp/CutMix (epoch ≥ Hard Mining Epoch)</text>
+  <text x="530" y="238" text-anchor="middle" font-size="10" fill="#6a1b9a">HFlip · ShiftScaleRotate · CLAHE · JPEG Compression · GaussNoise · ElasticTransform · CoarseDropout · Posterize</text>
+  <text x="530" y="252" text-anchor="middle" font-size="9"  fill="#7b1fa2">Xception norm: μ=[0.5,0.5,0.5] · σ=[0.5,0.5,0.5]   ·  MixUp lam~Beta(0.2)  ·  CutMix (α=1.0, 50% split)</text>
+
+  <line x1="530" y1="254" x2="530" y2="274" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- TWO PARALLEL BRANCHES -->
+  <!-- Left: Xception + ECA -->
+  <rect x="40"  y="276" width="440" height="84" rx="12" fill="#7b1fa2" stroke="#4a148c" stroke-width="2" filter="url(#ds3)"/>
+  <text x="260" y="299" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">Xception Backbone (timm: legacy_xception)</text>
+  <text x="260" y="316" text-anchor="middle" font-size="11" fill="#e1bee7">Pretrained · global_pool='avg' · 2048-dim · FP32</text>
+  <text x="260" y="333" text-anchor="middle" font-size="10" fill="#ce93d8">↓ ECA Channel Attention (1D Conv, k=odd(log₂C))</text>
+  <text x="260" y="349" text-anchor="middle" font-size="9"  fill="#f3e5f5">Re-weights 2048 channels · σ(Conv1d) · element-wise multiply</text>
+
+  <!-- Right: Frequency Branch -->
+  <rect x="580" y="276" width="440" height="84" rx="12" fill="#6a1b9a" stroke="#4a148c" stroke-width="2" filter="url(#ds3)"/>
+  <text x="800" y="299" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">Frequency Branch</text>
+  <text x="800" y="316" text-anchor="middle" font-size="11" fill="#e1bee7">Linear(2048→256) → LayerNorm → GELU → Dropout</text>
+  <text x="800" y="333" text-anchor="middle" font-size="10" fill="#ce93d8">→ Linear(256→256) → LayerNorm</text>
+  <text x="800" y="349" text-anchor="middle" font-size="9"  fill="#f3e5f5">Captures JPEG/compression artifacts in spectral domain</text>
+
+  <!-- Input projection arrow from Xception to BiLSTM -->
+  <line x1="260" y1="360" x2="260" y2="390" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="264" y="380" font-size="9" fill="#546e7a">input_proj(2048→512)</text>
+
+  <!-- Frequency pooling arrow -->
+  <line x1="800" y1="360" x2="800" y2="390" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="804" y="380" font-size="9" fill="#546e7a">masked avg-pool → freq_pooled</text>
+
+  <!-- BiLSTM + Attention row -->
+  <rect x="40" y="392" width="440" height="70" rx="12" fill="#9c27b0" stroke="#4a148c" stroke-width="2" filter="url(#ds3)"/>
+  <text x="260" y="416" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">BiLSTM Temporal (cuDNN disabled)</text>
+  <text x="260" y="433" text-anchor="middle" font-size="11" fill="#e1bee7">2 layers · hidden=256 · bidirectional → 512-dim</text>
+  <text x="260" y="450" text-anchor="middle" font-size="10" fill="#ce93d8">Temporal dropout(0.3) before attention</text>
+
+  <rect x="580" y="392" width="440" height="70" rx="12" fill="#9c27b0" stroke="#4a148c" stroke-width="2" filter="url(#ds3)"/>
+  <text x="800" y="416" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Multi-Head Self-Attention</text>
+  <text x="800" y="433" text-anchor="middle" font-size="11" fill="#e1bee7">4 heads · embed_dim=512 · key_padding_mask</text>
+  <text x="800" y="450" text-anchor="middle" font-size="10" fill="#ce93d8">Residual + LayerNorm → masked pooling → temporal_pooled (512d)</text>
+
+  <line x1="480" y1="427" x2="580" y2="427" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- Concatenation -->
+  <line x1="800" y1="462" x2="800" y2="488" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="260" y1="462" x2="260" y2="488" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="260" y1="488" x2="800" y2="488" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="550" y="484" text-anchor="middle" font-size="10" fill="#7b1fa2">concat([temporal_pooled(512d), freq_pooled(256d)]) = 768d</text>
+  <line x1="530" y1="488" x2="530" y2="506" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- Classifier -->
+  <rect x="210" y="508" width="640" height="64" rx="12" fill="#4a148c" stroke="#311b92" stroke-width="2" filter="url(#ds3)"/>
+  <text x="530" y="531" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Fused Classifier Head</text>
+  <text x="530" y="548" text-anchor="middle" font-size="11" fill="#e1bee7">Linear(768→256) → LayerNorm → GELU → Dropout(0.3)</text>
+  <text x="530" y="564" text-anchor="middle" font-size="10" fill="#ce93d8">→ Linear(256→128) → LayerNorm → GELU → Dropout(0.15) → Linear(128→1)</text>
+
+  <line x1="530" y1="572" x2="530" y2="596" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- Hard Mining label -->
+  <rect x="820" y="392" width="0" height="0" rx="0"/>
+  <text x="1050" y="410" text-anchor="end" font-size="9" fill="#9c27b0">Hard negative mining</text>
+  <text x="1050" y="422" text-anchor="end" font-size="9" fill="#9c27b0">refreshed every 5 epochs</text>
+  <text x="1050" y="434" text-anchor="end" font-size="9" fill="#9c27b0">class-balanced sampling</text>
+
+  <!-- Output -->
+  <rect x="340" y="598" width="380" height="42" rx="21" fill="#4a148c" stroke="#311b92" stroke-width="2" filter="url(#ds3)"/>
+  <text x="530" y="617" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">OUTPUT: P_CNN → cnn_predictions.csv</text>
+  <text x="530" y="633" text-anchor="middle" font-size="10" fill="#e1bee7">6-pass TTA: Original · HFlip · Bright+ · Bright− · Blur · Zoom(93%)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="two-col mt-24">
+    <div class="card">
+      <h3 style="color:#4a148c;margin-bottom:12px;">🎛️ Training Configuration</h3>
+      <ul class="feature-list">
+        <li><strong>Epochs:</strong> 40 · LR: 1×10⁻⁴ · Weight Decay: 1×10⁻²</li>
+        <li><strong>Loss:</strong> Focal Loss (α=dynamic, γ=2.0, smooth=0.05)</li>
+        <li><strong>FOCAL_ALPHA</strong> is computed dynamically per fold from class counts</li>
+        <li><strong>SWA:</strong> epoch 15 → full BN stats update (manual loop, not update_bn)</li>
+        <li><strong>Hard Mining:</strong> epoch 10, class-balanced WeightedRandomSampler, refreshed every 5 epochs</li>
+        <li><strong>Curriculum:</strong> Mixup (α=0.2) + CutMix (α=1.0) activated from epoch 0</li>
+        <li><strong>Scheduler:</strong> CosineAnnealingLR(T_max=SWA_START, eta_min=LR×0.01)</li>
+        <li><strong>TTA:</strong> 6-pass (original, H-flip, bright+15%, bright−15%, blur, 93% crop+resize)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#4a148c;margin-bottom:12px;">🔬 Architectural Innovations</h3>
+      <ul class="feature-list">
+        <li><strong>ECA-Net:</strong> efficient channel attention via 1D conv (k=odd(⌈(log₂C + 1)/2⌉))</li>
+        <li><strong>Frequency branch:</strong> parallel 256-dim stream from spatial features</li>
+        <li><strong>Dual fusion:</strong> temporal (512d) || frequency (256d) → 768d classifier</li>
+        <li><strong>LSTM init:</strong> Xavier-uniform for input weights, Orthogonal for hidden, forget-gate bias=1</li>
+        <li><strong>mask propagation:</strong> through LSTM → attention → masked avg-pool</li>
+        <li><strong>No dropout on LSTM</strong> for cuDNN P100 compatibility (single layer uses 0)</li>
+        <li><strong>Per-fold FOCAL_ALPHA</strong> prevents bias with identity-split class imbalance</li>
+        <li><strong>Output file:</strong> <code>cnn_predictions.csv</code> (col: P_CNN)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FLOWCHART 4: Swin Transformer
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="model4">
+  <div class="section-label">Model 4 of 4</div>
+  <div class="section-title">Swin Transformer Tiny + DCT Frequency Branch</div>
+  <div class="section-sub">
+    The Swin Transformer's hierarchical shifted-window attention (768-dim output) is paired with a novel
+    <em>on-the-fly DCT frequency branch</em> computed from raw frame pixels. Pack-padded-sequence LSTM eliminates
+    padding corruption. A full 5-fold cross-validation loop runs in a single session, producing
+    out-of-fold (OOF) predictions for bias-free ensemble calibration.
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-header">
+      <div class="fc-num" style="background:linear-gradient(135deg,#e65100,#ff9800);">4</div>
+      <div>
+        <h2>Swin Transformer + DCT Architecture Flowchart</h2>
+        <p>Eye-aligned MTCNN → Swin-Tiny (768d) + ECA + on-the-fly DCT(128d) → pack_padded BiLSTM → 5-fold OOF</p>
+      </div>
+    </div>
+    <div class="fc-wrapper">
+<svg viewBox="0 0 1060 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">
+  <defs>
+    <marker id="arr4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#546e7a"/>
+    </marker>
+    <filter id="ds4"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#e65100" flood-opacity="0.10"/></filter>
+  </defs>
+
+  <text x="530" y="26" text-anchor="middle" font-size="15" font-weight="800" fill="#1a237e">Swin Transformer Dual-Branch Pipeline (5-Fold OOF)</text>
+
+  <!-- Input -->
+  <rect x="380" y="42" width="300" height="50" rx="12" fill="#fff3e0" stroke="#e65100" stroke-width="2" filter="url(#ds4)"/>
+  <text x="530" y="64" text-anchor="middle" font-size="13" font-weight="700" fill="#bf360c">🎬 Input Video</text>
+  <text x="530" y="82" text-anchor="middle" font-size="11" fill="#e65100">224×224 target · 16 frames/video</text>
+
+  <line x1="530" y1="92" x2="530" y2="116" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+  <!-- MTCNN + Alignment -->
+  <rect x="270" y="118" width="520" height="58" rx="12" fill="#ffe0b2" stroke="#e65100" stroke-width="2" filter="url(#ds4)"/>
+  <text x="530" y="142" text-anchor="middle" font-size="13" font-weight="700" fill="#bf360c">MTCNN + Eye-Landmark Alignment (aligned + blur-filtered)</text>
+  <text x="530" y="160" text-anchor="middle" font-size="11" fill="#e65100">Eye angle → warpAffine · Laplacian variance ≥ 20 quality gate · center-crop fallback</text>
+  <text x="530" y="175" text-anchor="middle" font-size="9"  fill="#f57c00">Pre-extracted cache at /kaggle/input/swin-1data-cache/ (auto-detected)</text>
+
+  <line x1="530" y1="176" x2="530" y2="200" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+  <!-- Augmentation + Progressive Frames -->
+  <rect x="140" y="202" width="780" height="56" rx="12" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="530" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">Augmentation + Progressive Frame Curriculum</text>
+  <text x="530" y="238" text-anchor="middle" font-size="10" fill="#e65100">Resize(224) · HFlip · ShiftScaleRotate · BrightnessContrast · JPEG(75-100%) · GaussNoise · CoarseDropout · Posterize</text>
+  <text x="530" y="253" text-anchor="middle" font-size="9"  fill="#f57c00">Progressive: epochs 0-4 → 5 frames  ·  epochs 5-14 → 10 frames  ·  epochs 15+ → 16 frames</text>
+
+  <line x1="530" y1="258" x2="530" y2="278" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+  <!-- TWO PARALLEL BRANCHES from frame -->
+  <!-- Branch label -->
+  <text x="310" y="295" text-anchor="middle" font-size="11" font-weight="700" fill="#e65100">Spatial Branch</text>
+  <text x="780" y="295" text-anchor="middle" font-size="11" font-weight="700" fill="#bf360c">DCT Frequency Branch (on-the-fly)</text>
+
+  <!-- Skip padded frames in backbone -->
+  <rect x="60" y="302" width="500" height="82" rx="12" fill="#e65100" stroke="#bf360c" stroke-width="2" filter="url(#ds4)"/>
+  <text x="310" y="326" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">Swin-Tiny Backbone (swin_tiny_patch4_window7_224)</text>
+  <text x="310" y="343" text-anchor="middle" font-size="11" fill="#ffe0b2">drop_path_rate=0.2 · global_pool='avg' · 768-dim · FP32</text>
+  <text x="310" y="360" text-anchor="middle" font-size="10" fill="#fff3e0">⚡ Skip padded frames in backbone (real_mask_flat) — zero-fill for padding</text>
+  <text x="310" y="376" text-anchor="middle" font-size="9"  fill="#ffcc80">↓ ECA Channel Attention (1D Conv, k=odd(log₂768)) → re-weighted 768-dim</text>
+
+  <!-- DCT Branch -->
+  <rect x="600" y="302" width="420" height="82" rx="12" fill="#f57c00" stroke="#bf360c" stroke-width="2" filter="url(#ds4)"/>
+  <text x="810" y="326" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">On-the-fly DCT Features</text>
+  <text x="810" y="343" text-anchor="middle" font-size="11" fill="#ffe0b2">RGB → grayscale → resize(64×64) → 2D DCT (8×8 block means+stds) → 128-dim</text>
+  <text x="810" y="360" text-anchor="middle" font-size="10" fill="#fff3e0">DCT matrix pre-computed as buffer · log(|DCT|+ε) normalisation</text>
+  <text x="810" y="376" text-anchor="middle" font-size="9"  fill="#ffcc80">Linear(128→192) → LayerNorm → GELU → Linear(192→192) → LayerNorm</text>
+
+  <!-- input projection + freq pooling -->
+  <line x1="310" y1="384" x2="310" y2="406" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="314" y="401" font-size="9" fill="#546e7a">input_proj(768→512)</text>
+  <line x1="810" y1="384" x2="810" y2="406" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="814" y="401" font-size="9" fill="#546e7a">masked pooling→freq_pooled(192d)</text>
+
+  <!-- Pack_padded BiLSTM -->
+  <rect x="60" y="408" width="500" height="72" rx="12" fill="#ff6d00" stroke="#bf360c" stroke-width="2" filter="url(#ds4)"/>
+  <text x="310" y="432" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">pack_padded_sequence BiLSTM</text>
+  <text x="310" y="449" text-anchor="middle" font-size="11" fill="#ffe0b2">2 layers · hidden=256 · bidirectional → 512-dim · cuDNN disabled</text>
+  <text x="310" y="466" text-anchor="middle" font-size="10" fill="#fff3e0">Lengths from mask.sum(1) · pad_packed_sequence(total_length=T)</text>
+  <text x="310" y="479" text-anchor="middle" font-size="9"  fill="#ffcc80">Xavier init (input), Orthogonal init (hidden), forget-gate bias=1</text>
+
+  <!-- Attention -->
+  <rect x="60" y="492" width="500" height="54" rx="12" fill="#e64a19" stroke="#bf360c" stroke-width="2" filter="url(#ds4)"/>
+  <text x="310" y="516" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Multi-Head Self-Attention + LayerNorm Residual</text>
+  <text x="310" y="533" text-anchor="middle" font-size="10" fill="#ffe0b2">4 heads · embed=512 · key_padding_mask=~mask · masked avg-pool → temporal_pooled(512d)</text>
+
+  <!-- Concatenation -->
+  <line x1="310" y1="546" x2="310" y2="568" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="810" y1="480" x2="810" y2="568" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="310" y1="568" x2="810" y2="568" stroke="#546e7a" stroke-width="1.5"/>
+  <text x="564" y="564" text-anchor="middle" font-size="10" fill="#e65100">concat([temporal(512d), freq(192d)]) = 704d</text>
+  <line x1="530" y1="568" x2="530" y2="586" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+  <!-- Classifier -->
+  <rect x="220" y="588" width="620" height="58" rx="12" fill="#bf360c" stroke="#7f0000" stroke-width="2" filter="url(#ds4)"/>
+  <text x="530" y="611" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Fused Classifier Head</text>
+  <text x="530" y="628" text-anchor="middle" font-size="11" fill="#ffccbc">Linear(704→192) → LayerNorm → GELU → Dropout(0.3) → Linear(192→96) → LayerNorm → GELU → Linear(96→1)</text>
+
+  <line x1="530" y1="646" x2="530" y2="668" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+  <!-- Output -->
+  <rect x="300" y="670" width="460" height="42" rx="21" fill="#bf360c" stroke="#7f0000" stroke-width="2" filter="url(#ds4)"/>
+  <text x="530" y="690" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">OUTPUT: P_CNN → cnn_predictions_swin_oof_MASTER.csv</text>
+  <text x="530" y="706" text-anchor="middle" font-size="10" fill="#ffccbc">5-fold OOF · 6-pass TTA per fold · all folds in single session</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="two-col mt-24">
+    <div class="card">
+      <h3 style="color:#e65100;margin-bottom:12px;">🔬 Swin Transformer Innovations</h3>
+      <ul class="feature-list">
+        <li><strong>Window attention:</strong> swin_tiny_patch4_window7_224 (shifted windows, 7×7)</li>
+        <li><strong>Padded frame skip:</strong> only real frames processed by backbone (not padding zeros)</li>
+        <li><strong>DCT buffer:</strong> pre-computed 64×64 DCT matrix as non-trainable buffer</li>
+        <li><strong>pack_padded_sequence:</strong> eliminates padding corruption in LSTM gradient flow</li>
+        <li><strong>ECA attention:</strong> re-weights 768 Swin output channels before projection</li>
+        <li><strong>LSTM init:</strong> forget-gate bias=1 (standard LSTM best-practice)</li>
+        <li><strong>Full 5-fold OOF:</strong> single 11.5h session trains all folds sequentially</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#e65100;margin-bottom:12px;">⚙️ Training Configuration</h3>
+      <ul class="feature-list">
+        <li><strong>Epochs:</strong> 40 per fold · LR: 1×10⁻⁴ · Weight Decay: 1×10⁻²</li>
+        <li><strong>4 param groups:</strong> backbone_decay, backbone_nodecay, other_decay, other_nodecay</li>
+        <li><strong>Scheduler:</strong> LambdaLR (linear warmup + cosine decay to 10% min)</li>
+        <li><strong>SWA:</strong> epoch 15, 4 per-group SWA-LRs, anneal_strategy='cos' over 5 epochs</li>
+        <li><strong>Loss:</strong> Focal Loss (α=0.5, γ=2.0, label_smooth=0.08)</li>
+        <li><strong>MixUp:</strong> activated at epoch ≥ HARD_MINING_EPOCH (10)</li>
+        <li><strong>Early stopping:</strong> patience=10 on validation AUC</li>
+        <li><strong>Output file:</strong> <code>cnn_predictions_swin_oof_MASTER.csv</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FLOWCHART 5: ENSEMBLE FUSION
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="ensemble">
+  <div class="section-label">Final Stage</div>
+  <div class="section-title">Late-Fusion Ensemble Strategy</div>
+  <div class="section-sub">
+    All four model probability streams are merged on a shared <code>video_id</code> key via inner join.
+    Five complementary fusion strategies are evaluated; the best is selected by AUC. Bootstrap 95% confidence
+    intervals are reported for all final metrics in accordance with IEEE publication standards.
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-header">
+      <div class="fc-num" style="background:linear-gradient(135deg,#1a237e,#283593);">5</div>
+      <div>
+        <h2>Late-Fusion Ensemble Architecture Flowchart</h2>
+        <p>Probability alignment → 5 fusion strategies → optimal selection → bootstrap CI evaluation</p>
+      </div>
+    </div>
+    <div class="fc-wrapper">
+<svg viewBox="0 0 1060 680" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">
+  <defs>
+    <marker id="arr5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#546e7a"/>
+    </marker>
+    <filter id="ds5"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#1a237e" flood-opacity="0.14"/></filter>
+  </defs>
+
+  <text x="530" y="26" text-anchor="middle" font-size="15" font-weight="800" fill="#1a237e">Late-Fusion Ensemble Pipeline</text>
+
+  <!-- 4 input streams -->
+  <rect x="20"  y="42" width="200" height="72" rx="12" fill="#e0f2f1" stroke="#00695c" stroke-width="2" filter="url(#ds5)"/>
+  <text x="120" y="64"  text-anchor="middle" font-size="12" font-weight="800" fill="#004d40">rPPG Stream</text>
+  <text x="120" y="81"  text-anchor="middle" font-size="10" fill="#00695c">rppg_predictions.csv</text>
+  <text x="120" y="96"  text-anchor="middle" font-size="10" fill="#00695c">Column: P_rPPG</text>
+  <text x="120" y="109" text-anchor="middle" font-size="9"  fill="#26a69a">Physiological signal</text>
+
+  <rect x="272" y="42" width="200" height="72" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="2" filter="url(#ds5)"/>
+  <text x="372" y="64"  text-anchor="middle" font-size="12" font-weight="800" fill="#0d47a1">EfficientNet-B4</text>
+  <text x="372" y="81"  text-anchor="middle" font-size="10" fill="#1565c0">cnn_predictions.csv</text>
+  <text x="372" y="96"  text-anchor="middle" font-size="10" fill="#1565c0">Column: P_CNN</text>
+  <text x="372" y="109" text-anchor="middle" font-size="9"  fill="#42a5f5">Spatio-temporal CNN</text>
+
+  <rect x="525" y="42" width="200" height="72" rx="12" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" filter="url(#ds5)"/>
+  <text x="625" y="64"  text-anchor="middle" font-size="12" font-weight="800" fill="#4a148c">Xception</text>
+  <text x="625" y="81"  text-anchor="middle" font-size="10" fill="#6a1b9a">cnn_predictions.csv</text>
+  <text x="625" y="96"  text-anchor="middle" font-size="10" fill="#6a1b9a">Column: P_CNN</text>
+  <text x="625" y="109" text-anchor="middle" font-size="9"  fill="#9c27b0">Xception + Freq Branch</text>
+
+  <rect x="778" y="42" width="260" height="72" rx="12" fill="#fff3e0" stroke="#e65100" stroke-width="2" filter="url(#ds5)"/>
+  <text x="908" y="64"  text-anchor="middle" font-size="12" font-weight="800" fill="#bf360c">Swin Transformer</text>
+  <text x="908" y="81"  text-anchor="middle" font-size="10" fill="#e65100">cnn_predictions_swin_oof_MASTER.csv</text>
+  <text x="908" y="96"  text-anchor="middle" font-size="10" fill="#e65100">Column: P_CNN</text>
+  <text x="908" y="109" text-anchor="middle" font-size="9"  fill="#ff9800">5-fold OOF predictions</text>
+
+  <!-- Arrows converging -->
+  <line x1="120" y1="114" x2="120" y2="148" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="372" y1="114" x2="372" y2="148" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="625" y1="114" x2="625" y2="148" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="908" y1="114" x2="908" y2="148" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="120" y1="148" x2="908" y2="148" stroke="#546e7a" stroke-width="1.5"/>
+  <line x1="530" y1="148" x2="530" y2="166" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- Alignment step -->
+  <rect x="240" y="168" width="580" height="56" rx="12" fill="#e8eaf6" stroke="#3949ab" stroke-width="2" filter="url(#ds5)"/>
+  <text x="530" y="192" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">Video-ID Alignment (INNER JOIN)</text>
+  <text x="530" y="208" text-anchor="middle" font-size="11" fill="#283593">Merge on video_id · deduplicate (keep=last) · clamp P ∈ [0,1] · fill NaN with 0.5</text>
+  <text x="530" y="221" text-anchor="middle" font-size="9"  fill="#3949ab">Label reconciliation: all models trained on same master_dataset_index.csv → guaranteed agreement</text>
+
+  <line x1="530" y1="224" x2="530" y2="246" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- 5 fusion method boxes -->
+  <text x="530" y="264" text-anchor="middle" font-size="12" font-weight="700" fill="#1a237e">5 Parallel Fusion Strategies</text>
+
+  <rect x="20"  y="272" width="190" height="62" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="115" y="293" text-anchor="middle" font-size="10" font-weight="700" fill="#0d47a1">① Simple Average</text>
+  <text x="115" y="309" text-anchor="middle" font-size="9" fill="#1565c0">P = mean(P₁,P₂,P₃,P₄)</text>
+  <text x="115" y="323" text-anchor="middle" font-size="8" fill="#1976d2">Uniform weight = 0.25</text>
+  <text x="115" y="334" text-anchor="middle" font-size="8" fill="#1976d2">Baseline robustness</text>
+
+  <rect x="224" y="272" width="190" height="62" rx="10" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="319" y="293" text-anchor="middle" font-size="10" font-weight="700" fill="#1b5e20">② AUC-Weighted</text>
+  <text x="319" y="309" text-anchor="middle" font-size="9" fill="#388e3c">wᵢ = AUCᵢ / ΣAUCⱼ</text>
+  <text x="319" y="323" text-anchor="middle" font-size="8" fill="#2e7d32">Better models get</text>
+  <text x="319" y="334" text-anchor="middle" font-size="8" fill="#2e7d32">proportionally more weight</text>
+
+  <rect x="428" y="272" width="190" height="62" rx="10" fill="#fff3e0" stroke="#f57c00" stroke-width="1.5"/>
+  <text x="523" y="293" text-anchor="middle" font-size="10" font-weight="700" fill="#e65100">③ Rank-Based</text>
+  <text x="523" y="309" text-anchor="middle" font-size="9" fill="#f57c00">Normalize ranks to [0,1]</text>
+  <text x="523" y="323" text-anchor="middle" font-size="8" fill="#bf360c">Robust to probability</text>
+  <text x="523" y="334" text-anchor="middle" font-size="8" fill="#bf360c">scale/calibration differences</text>
+
+  <rect x="632" y="272" width="190" height="62" rx="10" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="727" y="293" text-anchor="middle" font-size="10" font-weight="700" fill="#4a148c">④ Meta-Learner LR</text>
+  <text x="727" y="309" text-anchor="middle" font-size="9" fill="#6a1b9a">LogisticRegression on</text>
+  <text x="727" y="323" text-anchor="middle" font-size="8" fill="#6a1b9a">[P₁,P₂,P₃,P₄] features</text>
+  <text x="727" y="334" text-anchor="middle" font-size="8" fill="#6a1b9a">5-fold OOF · no leakage</text>
+
+  <rect x="836" y="272" width="204" height="62" rx="10" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="938" y="293" text-anchor="middle" font-size="10" font-weight="700" fill="#1a237e">⑤ Grid-Search Optimal</text>
+  <text x="938" y="309" text-anchor="middle" font-size="9" fill="#283593">argmax AUC over</text>
+  <text x="938" y="323" text-anchor="middle" font-size="8" fill="#283593">Σwᵢ=1 (step 0.1)</text>
+  <text x="938" y="334" text-anchor="middle" font-size="8" fill="#283593">Coarse simplex search</text>
+
+  <!-- Convergence arrows to selector -->
+  <line x1="115" y1="334" x2="115" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="319" y1="334" x2="319" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="523" y1="334" x2="523" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="727" y1="334" x2="727" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="938" y1="334" x2="938" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="115" y1="368" x2="938" y2="368" stroke="#546e7a" stroke-width="1"/>
+  <line x1="530" y1="368" x2="530" y2="386" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- Best selection -->
+  <rect x="280" y="388" width="500" height="50" rx="12" fill="#1a237e" stroke="#0d1460" stroke-width="2" filter="url(#ds5)"/>
+  <text x="530" y="410" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Best Ensemble Selection (by AUC)</text>
+  <text x="530" y="428" text-anchor="middle" font-size="11" fill="#90caf9">F1-optimal threshold search on full set · P_final = best_method(P₁,P₂,P₃,P₄)</text>
+
+  <line x1="530" y1="438" x2="530" y2="458" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- Bootstrap CI -->
+  <rect x="200" y="460" width="660" height="56" rx="12" fill="#283593" stroke="#1a237e" stroke-width="2" filter="url(#ds5)"/>
+  <text x="530" y="484" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Bootstrap 95% Confidence Intervals (n=1000 iterations)</text>
+  <text x="530" y="500" text-anchor="middle" font-size="11" fill="#90caf9">AUC · Accuracy · F1-Score · Precision · Recall → all with [CI_low, CI_high]</text>
+  <text x="530" y="514" text-anchor="middle" font-size="9"  fill="#c5cae9">Stratified bootstrap resampling · RandomState(42) · skip single-class bootstrap samples</text>
+
+  <line x1="530" y1="516" x2="530" y2="538" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- Output files -->
+  <rect x="140" y="540" width="740" height="60" rx="12" fill="#0d1460" stroke="#1a237e" stroke-width="2" filter="url(#ds5)"/>
+  <text x="530" y="564" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">Ensemble Outputs</text>
+  <text x="530" y="582" text-anchor="middle" font-size="11" fill="#90caf9">ensemble_final_predictions.csv  ·  ensemble_metrics_with_ci.csv  ·  ensemble_evaluation_plots.png</text>
+  <text x="530" y="596" text-anchor="middle" font-size="9"  fill="#c5cae9">Columns: video_id · label · P_rPPG · P_efficientnet · P_xception · P_swin · P_final · pred_final</text>
+
+  <line x1="530" y1="600" x2="530" y2="622" stroke="#546e7a" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- Final output -->
+  <rect x="330" y="624" width="400" height="44" rx="22" fill="#c62828" stroke="#7f0000" stroke-width="2" filter="url(#ds5)"/>
+  <text x="530" y="644" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">🏆 FINAL PREDICTION: P(Fake) ∈ [0,1]</text>
+  <text x="530" y="661" text-anchor="middle" font-size="10" fill="#ffcdd2">Binary: threshold at optimal F1 · 0 = Real · 1 = Deepfake</text>
+</svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     COMPARISON TABLE
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">Comparison</div>
+  <div class="section-title">Model Architecture Comparison</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Property</th>
+        <th>rPPG + ML</th>
+        <th>EfficientNet-B4</th>
+        <th>Xception</th>
+        <th>Swin-Tiny</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Paradigm</td>
+          <td><span class="badge badge-teal">Physiological</span></td>
+          <td><span class="badge badge-blue">CNN Temporal</span></td>
+          <td><span class="badge badge-purple">CNN + Freq</span></td>
+          <td><span class="badge badge-orange">Transformer</span></td>
+        </tr>
+        <tr><td>Face Detection</td>
+          <td>MediaPipe FaceMesh (468 lm)</td>
+          <td>MTCNN</td>
+          <td>MTCNN + Eye alignment</td>
+          <td>MTCNN + Eye alignment</td>
+        </tr>
+        <tr><td>Input resolution</td>
+          <td>Full video (60 frames)</td>
+          <td>224×224 (16 frames)</td>
+          <td>299×299 (16 frames)</td>
+          <td>224×224 (16 frames)</td>
+        </tr>
+        <tr><td>Feature dim</td>
+          <td>117 rPPG features</td>
+          <td>1792-dim (EffNet-B4)</td>
+          <td>2048-dim (Xception)</td>
+          <td>768-dim (Swin-Tiny)</td>
+        </tr>
+        <tr><td>Temporal modelling</td>
+          <td>—</td>
+          <td>BiLSTM 2L×256H</td>
+          <td>BiLSTM 2L×256H</td>
+          <td>pack_padded BiLSTM 2L×256H</td>
+        </tr>
+        <tr><td>Attention</td>
+          <td>—</td>
+          <td>4-head MHA</td>
+          <td>4-head MHA + ECA</td>
+          <td>4-head MHA + ECA</td>
+        </tr>
+        <tr><td>Frequency branch</td>
+          <td>FFT radial (32d) + DCT (32d)</td>
+          <td>—</td>
+          <td>256-dim parallel branch</td>
+          <td>On-the-fly DCT 128-dim</td>
+        </tr>
+        <tr><td>Classifier output dim</td>
+          <td>Stacking LR logit</td>
+          <td>512-dim → 1</td>
+          <td>768-dim → 1</td>
+          <td>704-dim → 1</td>
+        </tr>
+        <tr><td>Loss function</td>
+          <td>—</td>
+          <td>Focal (α=0.6, γ=2.0, s=0.1)</td>
+          <td>Focal (α=dynamic, γ=2.0, s=0.05)</td>
+          <td>Focal (α=0.5, γ=2.0, s=0.08)</td>
+        </tr>
+        <tr><td>SWA</td>
+          <td>—</td>
+          <td>epoch 30</td>
+          <td>epoch 15</td>
+          <td>epoch 15</td>
+        </tr>
+        <tr><td>Hard negative mining</td>
+          <td>—</td>
+          <td>—</td>
+          <td>✓ epoch 10</td>
+          <td>—</td>
+        </tr>
+        <tr><td>MixUp / CutMix</td>
+          <td>—</td>
+          <td>MixUp (β lam)</td>
+          <td>MixUp + CutMix (50/50)</td>
+          <td>MixUp (epoch ≥ 10)</td>
+        </tr>
+        <tr><td>TTA passes</td>
+          <td>—</td>
+          <td>5</td>
+          <td>6</td>
+          <td>6 (OOF)</td>
+        </tr>
+        <tr><td>Cross-validation</td>
+          <td>GroupShuffleSplit 80/20</td>
+          <td>5-fold StratGroupKFold</td>
+          <td>5-fold StratGroupKFold</td>
+          <td>5-fold OOF (all folds)</td>
+        </tr>
+        <tr><td>Output file</td>
+          <td><code>rppg_predictions.csv</code></td>
+          <td><code>cnn_predictions.csv</code></td>
+          <td><code>cnn_predictions.csv</code></td>
+          <td><code>cnn_predictions_swin_oof_MASTER.csv</code></td>
+        </tr>
+        <tr><td>Score column</td>
+          <td><code>P_rPPG</code></td>
+          <td><code>P_CNN</code></td>
+          <td><code>P_CNN</code></td>
+          <td><code>P_CNN</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     OUTPUTS & REPRODUCIBILITY
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="outputs">
+  <div class="section-label">Outputs</div>
+  <div class="section-title">Output Files &amp; Reproducibility</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Notebook</th><th>Output File</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr><td>model_rppg</td><td><code>rppg_predictions.csv</code></td><td>video_id · label · P_rPPG</td></tr>
+        <tr><td>model_rppg</td><td><code>best_rppg_ml_model.joblib</code></td><td>Trained stacking ensemble</td></tr>
+        <tr><td>model_rppg</td><td><code>rppg_scaler.joblib</code></td><td>RobustScaler fitted on train</td></tr>
+        <tr><td>model_rppg</td><td><code>rppg_selector.joblib</code></td><td>ExtraTrees feature selector</td></tr>
+        <tr><td>model_efficientnet</td><td><code>cnn_predictions.csv</code></td><td>video_id · label · P_CNN</td></tr>
+        <tr><td>model_efficientnet</td><td><code>best_cnn_model_fold0.pth</code></td><td>Best EfficientNet checkpoint</td></tr>
+        <tr><td>model_xception</td><td><code>cnn_predictions.csv</code></td><td>video_id · label · P_CNN</td></tr>
+        <tr><td>model_xception</td><td><code>best_cnn_model_fold0.pth</code></td><td>Best Xception checkpoint</td></tr>
+        <tr><td>model_swin</td><td><code>cnn_predictions_swin_oof_MASTER.csv</code></td><td>video_id · label · P_CNN · fold</td></tr>
+        <tr><td>model_swin</td><td><code>swa_model_swin_fold{k}.pth</code></td><td>SWA model weights per fold</td></tr>
+        <tr><td>ensemble</td><td><code>ensemble_final_predictions.csv</code></td><td>All 4 scores + P_final + pred_final</td></tr>
+        <tr><td>ensemble</td><td><code>ensemble_metrics_with_ci.csv</code></td><td>AUC/Acc/F1/P/R with 95% CI</td></tr>
+        <tr><td>ensemble</td><td><code>ensemble_evaluation_plots.png</code></td><td>ROC · AUC bars · CM · score dist · corr</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card mt-24">
+    <h3 style="color:var(--primary);margin-bottom:16px;">🔬 Reproducibility Guarantees</h3>
+    <div class="card-grid card-grid-2" style="gap:16px;">
+      <div>
+        <ul class="feature-list">
+          <li>Global seed: <strong>SEED = 42</strong> across all notebooks (numpy, torch, random, CUDA)</li>
+          <li>Identity-aware splits: StratifiedGroupKFold on person identities prevents face memorisation</li>
+          <li>Identical dataset: all models read from <code>master_dataset_index.csv</code></li>
+          <li>Disk-based face cache: reproducible across Kaggle sessions</li>
+          <li>Checkpoint resume: every notebook supports session-safe auto-resume</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="feature-list">
+          <li>cuDNN benchmark=False for deterministic LSTM operation</li>
+          <li>Label reconciliation: inner join guarantees identical ground truth</li>
+          <li>Gradient clipping: max_norm=1.0 across all CNN models</li>
+          <li>P100 compatibility: strict FP32, no AMP, cuDNN disabled for LSTM</li>
+          <li>5-fold OOF: unbiased probability calibration for ensemble fusion</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-24">
+    <h3 style="color:var(--primary);margin-bottom:12px;">📚 Key References</h3>
+    <ul class="feature-list">
+      <li>Üstunet et al., "FakeCatcher: Detection of Synthetic Portrait Videos using Biological Signals," IEEE TPAMI 2023</li>
+      <li>de Haan &amp; Jeanne, "Robust Pulse Rate From Chrominance-Based rPPG," IEEE TBME 2013</li>
+      <li>Tan &amp; Le, "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks," ICML 2019</li>
+      <li>Chollet, "Xception: Deep Learning with Depthwise Separable Convolutions," CVPR 2017</li>
+      <li>Liu et al., "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows," ICCV 2021</li>
+      <li>Wang et al., "ECA-Net: Efficient Channel Attention for Deep CNNs," CVPR 2020</li>
+      <li>Rossler et al., "FaceForensics++: Learning to Detect Manipulated Facial Images," ICCV 2019</li>
+      <li>Li et al., "Celeb-DF: A Large-Scale Challenging Dataset for DeepFake Forensics," CVPR 2020</li>
+    </ul>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<footer>
+  <strong>NeuroPulse</strong> · Multi-Modal Deepfake Detection System ·
+  rPPG + EfficientNet-B4 + Xception + Swin-Tiny Late-Fusion Ensemble<br>
+  <span style="font-size:11px;opacity:0.6;margin-top:6px;display:block;">
+    Trained on FaceForensics++ · Celeb-DF v2 · DFDC · Custom Dataset · 
+    Identity-aware 5-fold cross-validation · Bootstrap 95% confidence intervals
+  </span>
+</footer>
+
+</body>
+</html>
