@@ -3,150 +3,2247 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeuroPulse | Deepfake Detection Interface</title>
+  <title>NeuroPulse · Deepfake Detection</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+/* ════════════════════════════════════════════════════
+   NeuroPulse · style.css
+   Dark Bioluminescent Neural Observatory Theme
+   Fonts: Bebas Neue · Manrope · JetBrains Mono
+════════════════════════════════════════════════════ */
+
+/* ── CSS VARIABLES ── */
+:root {
+  --void:    #020b14;
+  --abyss:   #071220;
+  --surface: #0c1d30;
+  --glass:   rgba(10, 22, 38, 0.80);
+  --glass-2: rgba(14, 28, 48, 0.92);
+  --border:  rgba(0, 200, 255, 0.09);
+  --border-b: rgba(0, 200, 255, 0.22);
+  --cyan:    #00c8ff;
+  --green:   #00ff9d;
+  --blue:    #4ab5ff;
+  --purple:  #c77dff;
+  --amber:   #ffb347;
+  --red:     #ff5c5c;
+  --text:    #b4cfec;
+  --text-bright: #e4f2ff;
+  --muted:   #3a5d7a;
+  --glow-c:  0 0 28px rgba(0, 200, 255, 0.20);
+  --glow-g:  0 0 28px rgba(0, 255, 157, 0.22);
+  --radius:  16px;
+  --radius-lg: 24px;
+}
+
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--void);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.65;
+}
+
+/* ── NEURAL CANVAS BACKGROUND ── */
+#neural-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.scanline {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 200, 255, 0.012) 3px,
+    rgba(0, 200, 255, 0.012) 4px
+  );
+}
+
+/* ── NAV ── */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(2, 11, 20, 0.7);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-pulse {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+  50%       { opacity: 0.4; box-shadow: 0 0 20px var(--cyan); }
+}
+
+.brand-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  color: var(--text-bright);
+}
+
+.brand-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(0,200,255,0.1);
+  border: 1px solid rgba(0,200,255,0.2);
+  color: var(--cyan);
+  letter-spacing: 0.04em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+}
+
+.nav-links a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 200ms ease;
+}
+
+.nav-links a:hover { color: var(--cyan); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 90px 28px 60px;
+}
+
+.hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.kicker-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rppg-col  { background: var(--green);  box-shadow: 0 0 8px var(--green); }
+.eff-col   { background: var(--blue);   box-shadow: 0 0 8px var(--blue); }
+.xcep-col  { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+.swin-col  { background: var(--amber);  box-shadow: 0 0 8px var(--amber); }
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4.5rem, 10vw, 9rem);
+  letter-spacing: 0.03em;
+  line-height: 0.93;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 28px;
+}
+
+.title-line { color: var(--text-bright); }
+
+.accent-gradient {
+  background: linear-gradient(110deg, var(--cyan) 0%, var(--green) 50%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  max-width: 660px;
+  font-size: clamp(0.9rem, 1.4vw, 1.05rem);
+  color: var(--text);
+  line-height: 1.75;
+  margin-bottom: 44px;
+  font-weight: 400;
+}
+
+.hero-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: fit-content;
+  background: var(--glass);
+  border: 1px solid var(--border-b);
+  border-radius: var(--radius);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.stat-card {
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.4rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stat-divider {
+  width: 1px;
+  background: var(--border-b);
+  flex-shrink: 0;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--muted), transparent);
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scroll-pulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(0.7); transform-origin: top; }
+  50%       { opacity: 1;   transform: scaleY(1); }
+}
+
+/* ── SECTIONS ── */
+.section {
+  position: relative;
+  z-index: 2;
+  padding: 80px 28px;
+}
+
+.section-dark {
+  background: rgba(7, 18, 32, 0.5);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.section-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  background: rgba(0,200,255,0.08);
+  border: 1px solid rgba(0,200,255,0.2);
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  letter-spacing: 0.04em;
+  color: var(--text-bright);
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.section-sub {
+  max-width: 600px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+/* ── PIPELINE FLOWCHART ── */
+.pipeline-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.pipe-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Input node */
+.input-node {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--glass-2);
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: var(--radius);
+  padding: 14px 30px;
+  box-shadow: 0 0 30px rgba(0,200,255,0.1), var(--glow-c);
+}
+
+.node-icon { font-size: 1.6rem; }
+
+.node-content strong {
+  display: block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  color: var(--text-bright);
+}
+
+.node-content span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Split SVG */
+.pipe-split-wrap {
+  width: 100%;
+  max-width: 1080px;
+  height: 70px;
+  flex-shrink: 0;
+}
+
+.split-svg, .merge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Streams container */
+.pipe-streams {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: 100%;
+}
+
+/* Individual stream */
+.stream {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.stream:hover {
+  transform: translateY(-4px);
+}
+
+/* Stream color overrides */
+.stream-rppg { border-color: rgba(0, 255, 157, 0.18); }
+.stream-rppg:hover { box-shadow: 0 16px 40px rgba(0, 255, 157, 0.12); }
+.stream-eff  { border-color: rgba(74, 181, 255, 0.18); }
+.stream-eff:hover  { box-shadow: 0 16px 40px rgba(74, 181, 255, 0.12); }
+.stream-xcep { border-color: rgba(199, 125, 255, 0.18); }
+.stream-xcep:hover { box-shadow: 0 16px 40px rgba(199, 125, 255, 0.12); }
+.stream-swin { border-color: rgba(255, 179, 71, 0.18); }
+.stream-swin:hover { box-shadow: 0 16px 40px rgba(255, 179, 71, 0.12); }
+
+/* Stream headers */
+.stream-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+}
+
+.stream-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  opacity: 0.7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.07);
+}
+
+.rppg-head  { background: linear-gradient(90deg, rgba(0,255,157,0.15), transparent); color: var(--green); }
+.eff-head   { background: linear-gradient(90deg, rgba(74,181,255,0.15), transparent); color: var(--blue); }
+.xcep-head  { background: linear-gradient(90deg, rgba(199,125,255,0.15), transparent); color: var(--purple); }
+.swin-head  { background: linear-gradient(90deg, rgba(255,179,71,0.15), transparent); color: var(--amber); }
+
+.stream-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.snode {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.snode-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+
+.snode strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 2px;
+}
+
+.snode span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.snode-arrow {
+  text-align: center;
+  font-size: 14px;
+  padding: 4px 0;
+  opacity: 0.6;
+}
+
+.rppg-arr  { color: var(--green); }
+.eff-arr   { color: var(--blue); }
+.xcep-arr  { color: var(--purple); }
+.swin-arr  { color: var(--amber); }
+
+/* Stream prob output */
+.stream-prob {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: auto;
+}
+
+.prob-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rppg-prob .prob-label { color: var(--green); }
+.eff-prob  .prob-label { color: var(--blue); }
+.xcep-prob .prob-label { color: var(--purple); }
+.swin-prob .prob-label { color: var(--amber); }
+
+.prob-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prob-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 60%;
+  animation: shimmer-bar 3s ease-in-out infinite;
+}
+
+.rppg-fill { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.eff-fill  { background: var(--blue);  box-shadow: 0 0 6px var(--blue); }
+.xcep-fill { background: var(--purple);box-shadow: 0 0 6px var(--purple); }
+.swin-fill { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+@keyframes shimmer-bar {
+  0%, 100% { opacity: 0.5; width: 50%; }
+  50%       { opacity: 1;   width: 75%; }
+}
+
+/* Merge SVG */
+.pipe-merge-wrap {
+  width: 100%;
+  max-width: 1080px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+/* Ensemble node */
+.pipe-ensemble { margin-top: 0; }
+
+.ensemble-node {
+  width: 100%;
+  max-width: 760px;
+  background: linear-gradient(130deg, rgba(0,200,255,0.08), rgba(0,255,157,0.05), rgba(74,181,255,0.07));
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 40px rgba(0,200,255,0.12), 0 0 80px rgba(0,200,255,0.05);
+  padding: 22px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ensemble-node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0,200,255,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ensemble-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.fusion-methods {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fm-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--muted);
+}
+
+.active-fm {
+  background: rgba(0,200,255,0.12);
+  border-color: rgba(0,200,255,0.35);
+  color: var(--cyan);
+}
+
+.ensemble-sub {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Final arrow */
+.pipe-final-arrow {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+/* Verdict node */
+.verdict-node {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(130deg, rgba(0,255,157,0.1), rgba(0,200,255,0.08));
+  border: 1px solid rgba(0,255,157,0.3);
+  border-radius: var(--radius);
+  padding: 18px 32px;
+  box-shadow: 0 0 30px rgba(0,255,157,0.1);
+}
+
+.verdict-icon { font-size: 1.8rem; }
+
+.verdict-node strong {
+  display: block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  color: var(--green);
+}
+
+.verdict-node span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── INFERENCE SECTION ── */
+.inference-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.glass-card {
+  background: var(--glass-2);
+  border: 1px solid var(--border-b);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,200,255,0.4), transparent);
+}
+
+.card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+
+.glass-card h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.card-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+/* Drop zone */
+.dropzone {
+  display: block;
+  border: 1.5px dashed rgba(0,200,255,0.25);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 250ms ease;
+  position: relative;
+  background: rgba(0,200,255,0.03);
+  margin-bottom: 18px;
+}
+
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: var(--cyan);
+  background: rgba(0,200,255,0.07);
+  box-shadow: 0 0 24px rgba(0,200,255,0.1);
+}
+
+.dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dz-content { pointer-events: none; }
+
+.dz-icon {
+  color: var(--cyan);
+  margin-bottom: 12px;
+  opacity: 0.7;
+  transition: opacity 200ms;
+}
+
+.dropzone:hover .dz-icon { opacity: 1; }
+
+.dz-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.dz-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.form-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-row { display: flex; }
+
+/* Status pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 250ms ease;
+}
+
+.pill::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pill-idle    { background: rgba(58,93,122,0.2); border: 1px solid rgba(58,93,122,0.4); color: var(--muted); }
+.pill-loading { background: rgba(255,179,71,0.12); border: 1px solid rgba(255,179,71,0.3); color: var(--amber); }
+.pill-ok      { background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.3); color: var(--green); }
+.pill-error   { background: rgba(255,92,92,0.1); border: 1px solid rgba(255,92,92,0.3); color: var(--red); }
+
+.pill-loading::before { animation: blink 0.8s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+/* Analyze button */
+.btn-analyze {
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(120deg, #0e4a80, #1060a0, #0e4a80);
+  background-size: 200% 100%;
+  color: var(--text-bright);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: filter 200ms ease, transform 150ms ease, background-position 400ms ease;
+}
+
+.btn-analyze:not(:disabled):hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  background-position: right center;
+}
+
+.btn-analyze:not(:disabled) {
+  background: linear-gradient(120deg, #0a3d6e, var(--cyan), #0a6688);
+  background-size: 200% 100%;
+  box-shadow: 0 8px 30px rgba(0,200,255,0.25);
+}
+
+.btn-analyze:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-shimmer {
+  position: absolute;
+  top: 0; left: -80%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmer-btn 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-btn {
+  0%   { left: -80%; }
+  60%, 100% { left: 130%; }
+}
+
+/* Result card */
+.result-core {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+/* Probability ring */
+.ring-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.ring-svg {
+  width: 160px;
+  height: 160px;
+  display: block;
+}
+
+.ring-arc {
+  transition: stroke-dashoffset 600ms cubic-bezier(0.34, 1.56, 0.64, 1), stroke 400ms ease;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ring-prob {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.ring-center small {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+}
+
+/* KV panel */
+.kv-panel { display: flex; flex-direction: column; gap: 0; }
+
+.kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.kv-key {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.kv-val {
+  font-size: 13px;
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+.kv-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px !important;
+}
+
+/* Stream contribution bars */
+.stream-bars {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 14px;
+}
+
+.sb-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.sb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sb-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.sb-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sb-fill {
+  height: 100%;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 700ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.sb-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  width: 36px;
+  text-align: right;
+}
+
+/* Debug */
+.debug-wrap {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 14px;
+}
+
+.debug-wrap summary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 10px;
+}
+
+.debug-pre {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(180,207,236,0.8);
+  overflow: auto;
+  max-height: 200px;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* ── MODEL CARDS ── */
+.model-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.mcard {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 280ms ease, box-shadow 280ms ease;
+}
+
+.mcard:hover { transform: translateY(-5px); }
+
+.mcard-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.mcard-rppg .mcard-accent  { background: linear-gradient(90deg, var(--green), transparent); }
+.mcard-eff  .mcard-accent  { background: linear-gradient(90deg, var(--blue), transparent); }
+.mcard-xcep .mcard-accent  { background: linear-gradient(90deg, var(--purple), transparent); }
+.mcard-swin .mcard-accent  { background: linear-gradient(90deg, var(--amber), transparent); }
+
+.mcard-rppg:hover { border-color: rgba(0,255,157,0.2);  box-shadow: 0 18px 40px rgba(0,255,157,0.1); }
+.mcard-eff:hover  { border-color: rgba(74,181,255,0.2); box-shadow: 0 18px 40px rgba(74,181,255,0.1); }
+.mcard-xcep:hover { border-color: rgba(199,125,255,0.2);box-shadow: 0 18px 40px rgba(199,125,255,0.1); }
+.mcard-swin:hover { border-color: rgba(255,179,71,0.2); box-shadow: 0 18px 40px rgba(255,179,71,0.1); }
+
+.mcard-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.mcard h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  color: var(--text-bright);
+  margin-bottom: 10px;
+}
+
+.mcard-tagline {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 18px;
+  min-height: 52px;
+}
+
+.mcard-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.spec-row {
+  display: flex;
+  flex-direction: column;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.spec-row span {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.spec-row strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+.mcard-output {
+  margin-top: 14px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcard-output span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mcard-output code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+  word-break: break-all;
+}
+
+/* Callout box */
+.callout-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(0,200,255,0.05);
+  border: 1px solid rgba(0,200,255,0.18);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+
+.callout-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+
+.callout-box strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.callout-box p {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.callout-box code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: rgba(0,200,255,0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--cyan);
+}
+
+/* ── FOOTER ── */
+.footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+  padding: 36px 28px;
+  text-align: center;
+}
+
+.footer-inner { max-width: 800px; margin: 0 auto; }
+
+.footer .nav-brand {
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.footer-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+
+.footer-refs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(58,93,122,0.7);
+  line-height: 1.8;
+}
+
+.footer-refs span {
+  color: var(--muted);
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeSlideUp 700ms ease forwards;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .model-cards { grid-template-columns: repeat(2, 1fr); }
+  .pipe-streams { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 780px) {
+  .inference-grid { grid-template-columns: 1fr; }
+  .result-core    { grid-template-columns: 1fr; }
+  .hero-stats     { flex-direction: column; }
+  .stat-divider   { width: 100%; height: 1px; }
+  .nav-links      { display: none; }
+  .model-cards    { grid-template-columns: 1fr; }
+  .pipe-streams   { grid-template-columns: 1fr; }
+  .mcard-tagline  { min-height: unset; }
+}
+
+@media (max-width: 500px) {
+  .hero-title { font-size: 3.8rem; }
+  .section    { padding: 50px 18px; }
+}
+
+  </style>
 </head>
 <body>
-  <div class="backdrop backdrop-a"></div>
-  <div class="backdrop backdrop-b"></div>
-  <div class="grain"></div>
 
-  <main class="page">
-    <header class="hero card reveal">
-      <p class="eyebrow">NeuroPulse Research Interface</p>
-      <h1>Multi-Modal Deepfake Detection</h1>
-      <p class="hero-text">
-        Upload one video and get an automatic ensemble deepfake prediction.
-        No API URL, no model selection, no manual configuration.
+  <!-- ═══════════ NEURAL CANVAS BG ═══════════ -->
+  <canvas id="neural-canvas"></canvas>
+  <div class="scanline"></div>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="brand-pulse"></span>
+        <span class="brand-name">NeuroPulse</span>
+        <span class="brand-tag">v2.0 Research</span>
+      </div>
+      <div class="nav-links">
+        <a href="#pipeline">Pipeline</a>
+        <a href="#inference">Inference</a>
+        <a href="#models">Architecture</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-kicker">
+        <span class="kicker-dot rppg-col"></span>
+        <span class="kicker-dot eff-col"></span>
+        <span class="kicker-dot xcep-col"></span>
+        <span class="kicker-dot swin-col"></span>
+        <span>Multi-Modal · Identity-Aware · Bootstrap-CI Reporting</span>
+      </div>
+      <h1 class="hero-title">
+        <span class="title-line">Deepfake</span>
+        <span class="title-line accent-gradient">Detection</span>
+        <span class="title-line">at Research Grade</span>
+      </h1>
+      <p class="hero-sub">
+        Four-stream ensemble fusion — rPPG physiological signals, EfficientNet-B4,
+        Xception dual-branch, and Swin Transformer — trained with identity-aware
+        cross-validation and fused via AUC-optimised late-stage aggregation.
       </p>
-      <div class="hero-metrics">
-        <div>
-          <strong>4</strong>
-          <span>Modal Streams</span>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-num" style="color: var(--green)">4</span>
+          <span class="stat-label">Parallel Streams</span>
         </div>
-        <div>
-          <strong>5</strong>
-          <span>Fusion Methods</span>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <span class="stat-num" style="color: var(--blue)">5</span>
+          <span class="stat-label">Fusion Strategies</span>
         </div>
-        <div>
-          <strong>95%</strong>
-          <span>Bootstrap CI Reporting</span>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <span class="stat-num" style="color: var(--purple)">117</span>
+          <span class="stat-label">rPPG Features</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+          <span class="stat-num" style="color: var(--amber)">95%</span>
+          <span class="stat-label">Bootstrap CI</span>
         </div>
       </div>
-    </header>
+    </div>
+    <div class="hero-scroll-hint">
+    
+      <div class="scroll-line"></div>
+    </div>
+  </section>
 
-    <section class="card architecture reveal delay-1">
-      <div class="arch-head">
-        <h2>Four-Stream Research Architecture</h2>
-        <p>A publication-grade deepfake pipeline with physiological and spatio-temporal fusion.</p>
-      </div>
-      <div class="model-grid">
-        <article class="model-card rppg">
-          <h3>Model 1 · rPPG Physiological Stream</h3>
-          <p>MediaPipe FaceMesh + CHROM rPPG with 117 handcrafted physiological features and stacked ML.</p>
-          <ul>
-            <li>9 ROI blood-flow extraction</li>
-            <li>XGBoost + LightGBM + HistGradBoost</li>
-            <li>Identity-aware grouped splits</li>
-          </ul>
-        </article>
-        <article class="model-card eff">
-          <h3>Model 2 · EfficientNet-B4 Temporal CNN</h3>
-          <p>EfficientNet-B4 spatial encoding followed by BiLSTM and multi-head attention.</p>
-          <ul>
-            <li>16-frame temporal reasoning</li>
-            <li>SWA optimization</li>
-            <li>5-pass test-time augmentation</li>
-          </ul>
-        </article>
-        <article class="model-card xcep">
-          <h3>Model 3 · Xception + Frequency Branch</h3>
-          <p>Dual-branch fusion with ECA attention, frequency features, and hard-negative curriculum.</p>
-          <ul>
-            <li>MTCNN alignment + spectral cues</li>
-            <li>MixUp + CutMix curriculum</li>
-            <li>6-pass TTA robustness</li>
-          </ul>
-        </article>
-        <article class="model-card swin">
-          <h3>Model 4 · Swin Transformer + DCT</h3>
-          <p>Hierarchical transformer stream with DCT frequency encoder and 5-fold OOF calibration.</p>
-          <ul>
-            <li>Progressive temporal curriculum</li>
-            <li>Pack-padded sequence modeling</li>
-            <li>Cross-fold unbiased probabilities</li>
-          </ul>
-        </article>
+  <!-- ═══════════ PIPELINE FLOWCHART ═══════════ -->
+  <section class="section" id="pipeline">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-badge">System Architecture</div>
+        <h2 class="section-title">Four-Stream Ensemble Pipeline</h2>
+        <p class="section-sub">End-to-end inference graph from raw video to calibrated deepfake probability with identity-aware splits preventing data leakage.</p>
       </div>
 
-      <div class="fusion-track">
-        <div class="fusion-node">rPPG</div>
-        <div class="fusion-node">EffNet</div>
-        <div class="fusion-node">Xception</div>
-        <div class="fusion-node">Swin</div>
-        <div class="fusion-arrow">→</div>
-        <div class="fusion-ensemble">Late Fusion Ensemble (AUC-optimized)</div>
-      </div>
-    </section>
+      <!-- TOP: INPUT NODE -->
+      <div class="pipeline-wrap">
+        <div class="pipe-row pipe-top">
+          <div class="pipe-node input-node">
+            <div class="node-icon">🎬</div>
+            <div class="node-content">
+              <strong>Input Video</strong>
+              <span>MP4 · AVI · MOV · MKV · WEBM</span>
+            </div>
+          </div>
+        </div>
 
-    <section class="grid">
-      <article class="card panel reveal">
-        <h2>One-Step Inference</h2>
-        <p class="muted">Drop a video. NeuroPulse backend auto-selects your final ensemble model.</p>
+        <!-- SPLIT CONNECTOR SVG -->
+        <div class="pipe-split-wrap">
+          <svg class="split-svg" viewBox="0 0 1060 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Vertical stem -->
+            <line x1="530" y1="0" x2="530" y2="20" stroke="rgba(0,200,255,0.5)" stroke-width="2"/>
+            <!-- Horizontal bar -->
+            <line x1="105" y1="20" x2="955" y2="20" stroke="rgba(0,200,255,0.35)" stroke-width="2"/>
+            <!-- Drops to each stream -->
+            <line x1="105"  y1="20" x2="105"  y2="70" stroke="#00ff9d" stroke-width="2"/>
+            <line x1="355"  y1="20" x2="355"  y2="70" stroke="#4ab5ff" stroke-width="2"/>
+            <line x1="705"  y1="20" x2="705"  y2="70" stroke="#c77dff" stroke-width="2"/>
+            <line x1="955"  y1="20" x2="955"  y2="70" stroke="#ffb347" stroke-width="2"/>
+            <!-- Animated flow particles -->
+            <circle r="3.5" fill="#00ff9d" opacity="0.9"><animateMotion dur="1.6s" repeatCount="indefinite" path="M530,0 L530,20 L105,20 L105,70"/></circle>
+            <circle r="3.5" fill="#4ab5ff" opacity="0.9"><animateMotion dur="1.9s" repeatCount="indefinite" path="M530,0 L530,20 L355,20 L355,70"/></circle>
+            <circle r="3.5" fill="#c77dff" opacity="0.9"><animateMotion dur="1.7s" repeatCount="indefinite" path="M530,0 L530,20 L705,20 L705,70"/></circle>
+            <circle r="3.5" fill="#ffb347" opacity="0.9"><animateMotion dur="2.1s" repeatCount="indefinite" path="M530,0 L530,20 L955,20 L955,70"/></circle>
+          </svg>
+        </div>
 
-        <form id="predict-form" class="form" novalidate>
-          <label class="field upload-zone" id="upload-zone">
-            <input id="video-input" type="file" accept="video/*" required />
-            <span class="upload-title">Drop video here or click to browse</span>
-            <span id="video-meta" class="upload-meta">Supported: mp4, avi, mov, mkv, webm · max 500MB</span>
-          </label>
+        <!-- FOUR STREAMS -->
+        <div class="pipe-streams">
 
-          <button id="submit-btn" type="submit" class="btn primary">Analyze Video</button>
-        </form>
-      </article>
-
-      <article class="card panel reveal delay-1">
-        <h2>Result</h2>
-        <p class="muted">Calibrated deepfake probability with confidence and model traceability.</p>
-
-        <div id="status-pill" class="pill">Waiting for upload</div>
-
-        <div class="result-block">
-          <div class="meter-wrap">
-            <svg viewBox="0 0 120 120" class="meter" aria-hidden="true">
-              <circle cx="60" cy="60" r="50" class="meter-bg"></circle>
-              <circle cx="60" cy="60" r="50" class="meter-fg" id="meter-fg"></circle>
-            </svg>
-            <div class="meter-center">
-              <span id="probability">0.000</span>
-              <small>P(fake)</small>
+          <!-- STREAM 1: rPPG -->
+          <div class="stream stream-rppg">
+            <div class="stream-header rppg-head">
+              <span class="stream-badge">01</span>
+              <span>rPPG Physiological</span>
+            </div>
+            <div class="stream-body">
+              <div class="snode">
+                <div class="snode-icon">🔬</div>
+                <div>
+                  <strong>MediaPipe FaceMesh</strong>
+                  <span>468 landmarks · 9 ROI regions</span>
+                </div>
+              </div>
+              <div class="snode-arrow rppg-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">📡</div>
+                <div>
+                  <strong>CHROM rPPG</strong>
+                  <span>Bandpass 0.7–4 Hz · Welch PSD</span>
+                </div>
+              </div>
+              <div class="snode-arrow rppg-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">⚗️</div>
+                <div>
+                  <strong>117 Features</strong>
+                  <span>Spectral · HRV · Cross-ROI · Geometry</span>
+                </div>
+              </div>
+              <div class="snode-arrow rppg-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🧪</div>
+                <div>
+                  <strong>XGB + LGB + HistGB</strong>
+                  <span>Meta-LR stacking ensemble</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-prob rppg-prob">
+              <span class="prob-label">P_rPPG</span>
+              <span class="prob-bar"><span class="prob-fill rppg-fill"></span></span>
             </div>
           </div>
 
-          <div class="kv">
-            <p><span>Label</span><strong id="label">-</strong></p>
-            <p><span>Prediction</span><strong id="prediction">-</strong></p>
-            <p><span>Confidence</span><strong id="confidence">-</strong></p>
-            <p><span>Model</span><strong id="model">-</strong></p>
+          <!-- STREAM 2: EfficientNet-B4 -->
+          <div class="stream stream-eff">
+            <div class="stream-header eff-head">
+              <span class="stream-badge">02</span>
+              <span>EfficientNet-B4</span>
+            </div>
+            <div class="stream-body">
+              <div class="snode">
+                <div class="snode-icon">👁️</div>
+                <div>
+                  <strong>MTCNN Face Detect</strong>
+                  <span>min_face=60px · center-crop fallback</span>
+                </div>
+              </div>
+              <div class="snode-arrow eff-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🧠</div>
+                <div>
+                  <strong>EfficientNet-B4</strong>
+                  <span>1792-dim · 16 frames · SWA ep30</span>
+                </div>
+              </div>
+              <div class="snode-arrow eff-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🔁</div>
+                <div>
+                  <strong>BiLSTM × 2 + MHA</strong>
+                  <span>hidden=256 · 4 heads · 512-dim</span>
+                </div>
+              </div>
+              <div class="snode-arrow eff-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">✨</div>
+                <div>
+                  <strong>5-Pass TTA</strong>
+                  <span>Focal α=0.6 · Label smooth 0.1</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-prob eff-prob">
+              <span class="prob-label">P_EfficientNet</span>
+              <span class="prob-bar"><span class="prob-fill eff-fill"></span></span>
+            </div>
+          </div>
+
+          <!-- STREAM 3: Xception -->
+          <div class="stream stream-xcep">
+            <div class="stream-header xcep-head">
+              <span class="stream-badge">03</span>
+              <span>Xception + Freq</span>
+            </div>
+            <div class="stream-body">
+              <div class="snode">
+                <div class="snode-icon">🎯</div>
+                <div>
+                  <strong>MTCNN + Eye Align</strong>
+                  <span>Tilt correction · conf ≥ 0.9</span>
+                </div>
+              </div>
+              <div class="snode-arrow xcep-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">⚡</div>
+                <div>
+                  <strong>Xception + ECA Attn</strong>
+                  <span>2048-dim · Freq branch 256-dim</span>
+                </div>
+              </div>
+              <div class="snode-arrow xcep-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🔁</div>
+                <div>
+                  <strong>BiLSTM + MHA Fusion</strong>
+                  <span>768-dim fused · CutMix curriculum</span>
+                </div>
+              </div>
+              <div class="snode-arrow xcep-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">⛏️</div>
+                <div>
+                  <strong>Hard Negative Mining</strong>
+                  <span>6-pass TTA · SWA ep15</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-prob xcep-prob">
+              <span class="prob-label">P_Xception</span>
+              <span class="prob-bar"><span class="prob-fill xcep-fill"></span></span>
+            </div>
+          </div>
+
+          <!-- STREAM 4: Swin Transformer -->
+          <div class="stream stream-swin">
+            <div class="stream-header swin-head">
+              <span class="stream-badge">04</span>
+              <span>Swin Transformer</span>
+            </div>
+            <div class="stream-body">
+              <div class="snode">
+                <div class="snode-icon">🎯</div>
+                <div>
+                  <strong>MTCNN + Eye Align</strong>
+                  <span>Progressive 5→10→16 frames</span>
+                </div>
+              </div>
+              <div class="snode-arrow swin-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🪟</div>
+                <div>
+                  <strong>Swin-Tiny + ECA</strong>
+                  <span>768-dim · DCT 128-dim freq branch</span>
+                </div>
+              </div>
+              <div class="snode-arrow swin-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">📦</div>
+                <div>
+                  <strong>pack_padded BiLSTM</strong>
+                  <span>704-dim fused · MixUp ep≥10</span>
+                </div>
+              </div>
+              <div class="snode-arrow swin-arr">↓</div>
+              <div class="snode">
+                <div class="snode-icon">🔄</div>
+                <div>
+                  <strong>5-Fold OOF · 6-Pass TTA</strong>
+                  <span>All folds · unbiased calibration</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-prob swin-prob">
+              <span class="prob-label">P_Swin (OOF)</span>
+              <span class="prob-bar"><span class="prob-fill swin-fill"></span></span>
+            </div>
           </div>
         </div>
 
-        <pre id="debug" class="debug">{}</pre>
-      </article>
-    </section>
+        <!-- MERGE SVG -->
+        <div class="pipe-merge-wrap">
+          <svg class="merge-svg" viewBox="0 0 1060 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M105,0 Q105,40 530,80" stroke="#00ff9d" stroke-width="2" fill="none"/>
+            <path d="M355,0 Q355,40 530,80" stroke="#4ab5ff" stroke-width="2" fill="none"/>
+            <path d="M705,0 Q705,40 530,80" stroke="#c77dff" stroke-width="2" fill="none"/>
+            <path d="M955,0 Q955,40 530,80" stroke="#ffb347" stroke-width="2" fill="none"/>
+            <!-- Animated particles along merge paths -->
+            <circle r="3.5" fill="#00ff9d" opacity="0.9"><animateMotion dur="1.4s" repeatCount="indefinite" path="M105,0 Q105,40 530,80"/></circle>
+            <circle r="3.5" fill="#4ab5ff" opacity="0.9"><animateMotion dur="1.4s" begin="0.3s" repeatCount="indefinite" path="M355,0 Q355,40 530,80"/></circle>
+            <circle r="3.5" fill="#c77dff" opacity="0.9"><animateMotion dur="1.4s" begin="0.6s" repeatCount="indefinite" path="M705,0 Q705,40 530,80"/></circle>
+            <circle r="3.5" fill="#ffb347" opacity="0.9"><animateMotion dur="1.4s" begin="0.9s" repeatCount="indefinite" path="M955,0 Q955,40 530,80"/></circle>
+          </svg>
+        </div>
 
-    <section class="card footer-note reveal delay-2">
-      <h3>Paper-Ready Presentation Notes</h3>
-      <p>
-        This interface mirrors publication-style reporting: calibrated probability,
-        binary label, confidence score, and transparent model traceability.
+        <!-- ENSEMBLE NODE -->
+        <div class="pipe-row pipe-ensemble">
+          <div class="ensemble-node">
+            <div class="ensemble-inner">
+              <div class="ensemble-title">Late-Fusion Ensemble</div>
+              <div class="fusion-methods">
+                <span class="fm-tag">Simple Average</span>
+                <span class="fm-tag active-fm">AUC-Weighted ★</span>
+                <span class="fm-tag">Rank-Based</span>
+                <span class="fm-tag">Meta-Learner LR</span>
+                <span class="fm-tag">Grid-Search Optimal</span>
+              </div>
+              <div class="ensemble-sub">F1-optimal threshold search · Bootstrap 95% CI · Inner-join video_id alignment</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINAL ARROW -->
+        <div class="pipe-final-arrow">
+          <svg viewBox="0 0 40 50" width="40" height="50" xmlns="http://www.w3.org/2000/svg">
+            <line x1="20" y1="0" x2="20" y2="40" stroke="rgba(0,200,255,0.6)" stroke-width="2"/>
+            <polygon points="12,35 20,50 28,35" fill="rgba(0,200,255,0.6)"/>
+            <circle r="3" fill="#00c8ff" opacity="0.9">
+              <animateMotion dur="1.2s" repeatCount="indefinite" path="M20,0 L20,50"/>
+            </circle>
+          </svg>
+        </div>
+
+        <!-- OUTPUT / VERDICT -->
+        <div class="pipe-row pipe-bottom">
+          <div class="verdict-node">
+            <span class="verdict-icon">🛡️</span>
+            <div>
+              <strong>VERDICT</strong>
+              <span>P(fake) · Binary label · Confidence · Model trace · 95% CI</span>
+            </div>
+          </div>
+        </div>
+      </div><!-- /pipeline-wrap -->
+    </div>
+  </section>
+
+  <!-- ═══════════ INFERENCE ═══════════ -->
+  <section class="section section-dark" id="inference">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-badge">One-Step Inference</div>
+        <h2 class="section-title">Run Ensemble Detection</h2>
+        <p class="section-sub">Upload a video. The backend auto-routes through all four streams and returns a calibrated ensemble probability.</p>
+      </div>
+
+      <div class="inference-grid">
+        <!-- Upload panel -->
+        <article class="glass-card upload-card">
+          <div class="card-label">Upload</div>
+          <h3>Video Input</h3>
+          <p class="card-sub">Accepted formats: mp4, avi, mov, mkv, webm · Max 500MB</p>
+
+          <form id="predict-form" novalidate>
+            <label class="dropzone" id="upload-zone">
+              <input id="video-input" type="file" accept="video/*" required />
+              <div class="dz-content">
+                <div class="dz-icon" id="dz-icon">
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 4L20 26M20 4L13 11M20 4L27 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 30C6 32.2 7.8 34 10 34L30 34C32.2 34 34 32.2 34 30" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p class="dz-title" id="dz-title">Drop video here or click to browse</p>
+                <p class="dz-meta" id="video-meta">mp4 · avi · mov · mkv · webm · max 500MB</p>
+              </div>
+            </label>
+
+            <div class="form-footer">
+              <div class="status-row">
+                <div id="status-pill" class="pill pill-idle">Awaiting input</div>
+              </div>
+              <button id="submit-btn" type="submit" class="btn-analyze" disabled>
+                <span id="btn-text">Select a Video First</span>
+                <span class="btn-shimmer"></span>
+              </button>
+            </div>
+          </form>
+        </article>
+
+        <!-- Result panel -->
+        <article class="glass-card result-card">
+          <div class="card-label">Output</div>
+          <h3>Ensemble Result</h3>
+          <p class="card-sub">Calibrated deepfake probability with traceability.</p>
+
+          <div class="result-core">
+            <!-- Probability ring -->
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+                <!-- Decorative outer ring -->
+                <circle cx="80" cy="80" r="74" stroke="rgba(0,200,255,0.06)" stroke-width="1" fill="none"/>
+                <!-- Track -->
+                <circle cx="80" cy="80" r="62" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"/>
+                <!-- Progress arc -->
+                <circle cx="80" cy="80" r="62" class="ring-arc" id="ring-arc"
+                  stroke="#00ff9d"
+                  stroke-width="10"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-dasharray="389.56"
+                  stroke-dashoffset="389.56"
+                  transform="rotate(-90 80 80)"/>
+                <!-- Tick marks -->
+                <line x1="80" y1="4" x2="80" y2="14" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+                <line x1="156" y1="80" x2="146" y2="80" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+                <line x1="80" y1="156" x2="80" y2="146" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+                <line x1="4" y1="80" x2="14" y2="80" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+              </svg>
+              <div class="ring-center">
+                <span id="probability" class="ring-prob">—</span>
+                <small>P(fake)</small>
+              </div>
+            </div>
+
+            <!-- KV readouts -->
+            <div class="kv-panel">
+              <div class="kv-row">
+                <span class="kv-key">Label</span>
+                <strong id="label" class="kv-val">—</strong>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">Prediction</span>
+                <strong id="prediction" class="kv-val">—</strong>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">Confidence</span>
+                <strong id="confidence" class="kv-val">—</strong>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">Model</span>
+                <strong id="model" class="kv-val kv-mono">—</strong>
+              </div>
+
+              <!-- Stream bars -->
+              <div class="stream-bars" id="stream-bars">
+                <div class="sb-label">Stream Contributions</div>
+                <div class="sb-row">
+                  <span class="sb-name" style="color:var(--green)">rPPG</span>
+                  <div class="sb-track"><div class="sb-fill rppg-fill" id="bar-rppg" style="width:0%"></div></div>
+                  <span class="sb-val" id="val-rppg">—</span>
+                </div>
+                <div class="sb-row">
+                  <span class="sb-name" style="color:var(--blue)">EffNet</span>
+                  <div class="sb-track"><div class="sb-fill eff-fill" id="bar-eff" style="width:0%"></div></div>
+                  <span class="sb-val" id="val-eff">—</span>
+                </div>
+                <div class="sb-row">
+                  <span class="sb-name" style="color:var(--purple)">Xcep</span>
+                  <div class="sb-track"><div class="sb-fill xcep-fill" id="bar-xcep" style="width:0%"></div></div>
+                  <span class="sb-val" id="val-xcep">—</span>
+                </div>
+                <div class="sb-row">
+                  <span class="sb-name" style="color:var(--amber)">Swin</span>
+                  <div class="sb-track"><div class="sb-fill swin-fill" id="bar-swin" style="width:0%"></div></div>
+                  <span class="sb-val" id="val-swin">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Debug JSON -->
+          <details class="debug-wrap">
+            <summary>Raw API Response</summary>
+            <pre id="debug" class="debug-pre">{}</pre>
+          </details>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ARCHITECTURE CARDS ═══════════ -->
+  <section class="section" id="models">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="section-badge">Architecture</div>
+        <h2 class="section-title">Model Details</h2>
+        <p class="section-sub">Each stream is independently trained with identity-aware validation and contributes orthogonal signal to the ensemble.</p>
+      </div>
+
+      <div class="model-cards">
+
+        <div class="mcard mcard-rppg">
+          <div class="mcard-accent"></div>
+          <div class="mcard-num">01</div>
+          <h3>rPPG Physiological</h3>
+          <p class="mcard-tagline">Biological blood-flow signals extracted from 9 facial ROIs — deepfakes lack coherent rPPG patterns.</p>
+          <div class="mcard-specs">
+            <div class="spec-row"><span>Face Detection</span><strong>MediaPipe FaceMesh 468 lm</strong></div>
+            <div class="spec-row"><span>Signal Method</span><strong>CHROM rPPG</strong></div>
+            <div class="spec-row"><span>Bandpass</span><strong>0.7–4.0 Hz (Butterworth 3rd)</strong></div>
+            <div class="spec-row"><span>Feature Dim</span><strong>117 (spectral + HRV + geometry)</strong></div>
+            <div class="spec-row"><span>Classifiers</span><strong>XGBoost · LightGBM · HistGB</strong></div>
+            <div class="spec-row"><span>Meta-Learner</span><strong>LogisticRegression (5-fold OOF)</strong></div>
+            <div class="spec-row"><span>CV Strategy</span><strong>GroupShuffleSplit 80/20</strong></div>
+          </div>
+          <div class="mcard-output">
+            <span>Output:</span><code>rppg_predictions.csv → P_rPPG</code>
+          </div>
+        </div>
+
+        <div class="mcard mcard-eff">
+          <div class="mcard-accent"></div>
+          <div class="mcard-num">02</div>
+          <h3>EfficientNet-B4</h3>
+          <p class="mcard-tagline">ImageNet-pretrained spatial encoder with BiLSTM temporal modelling and multi-head self-attention.</p>
+          <div class="mcard-specs">
+            <div class="spec-row"><span>Backbone</span><strong>EfficientNet-B4 (1792-dim)</strong></div>
+            <div class="spec-row"><span>Input</span><strong>16 × 224² · 5-fold StratGroupKFold</strong></div>
+            <div class="spec-row"><span>Temporal</span><strong>BiLSTM 2L×256H + 4-head MHA</strong></div>
+            <div class="spec-row"><span>Loss</span><strong>Focal α=0.6 γ=2.0 · Label smooth 0.1</strong></div>
+            <div class="spec-row"><span>LR</span><strong>5×10⁻⁵ · Warmup 10% · CosineAnneal</strong></div>
+            <div class="spec-row"><span>SWA</span><strong>Epoch 30 · SWA-LR 5×10⁻⁵</strong></div>
+            <div class="spec-row"><span>TTA</span><strong>5 passes (flip · brightness · blur)</strong></div>
+          </div>
+          <div class="mcard-output">
+            <span>Output:</span><code>cnn_predictions.csv → P_CNN</code>
+          </div>
+        </div>
+
+        <div class="mcard mcard-xcep">
+          <div class="mcard-accent"></div>
+          <div class="mcard-num">03</div>
+          <h3>Xception + Frequency</h3>
+          <p class="mcard-tagline">Dual-branch: Xception spatial stream plus parallel DCT/FFT frequency branch capturing compression artifacts.</p>
+          <div class="mcard-specs">
+            <div class="spec-row"><span>Backbone</span><strong>Xception (2048-dim) + ECA Attn</strong></div>
+            <div class="spec-row"><span>Freq Branch</span><strong>Linear 2048→256-dim parallel</strong></div>
+            <div class="spec-row"><span>Fused Dim</span><strong>768-dim (temporal + freq)</strong></div>
+            <div class="spec-row"><span>Curriculum</span><strong>MixUp β=0.2 + CutMix α=1.0 (50/50)</strong></div>
+            <div class="spec-row"><span>Hard Mining</span><strong>WeightedRandomSampler · refresh/5ep</strong></div>
+            <div class="spec-row"><span>SWA</span><strong>Epoch 15 · manual BN update loop</strong></div>
+            <div class="spec-row"><span>TTA</span><strong>6 passes incl. center-crop 93%</strong></div>
+          </div>
+          <div class="mcard-output">
+            <span>Output:</span><code>cnn_predictions.csv → P_CNN</code>
+          </div>
+        </div>
+
+        <div class="mcard mcard-swin">
+          <div class="mcard-accent"></div>
+          <div class="mcard-num">04</div>
+          <h3>Swin Transformer + DCT</h3>
+          <p class="mcard-tagline">Hierarchical shifted-window attention with on-the-fly DCT frequency branch and full 5-fold OOF calibration.</p>
+          <div class="mcard-specs">
+            <div class="spec-row"><span>Backbone</span><strong>Swin-Tiny patch4_window7 (768-dim)</strong></div>
+            <div class="spec-row"><span>DCT Branch</span><strong>8×8 blocks → 128-dim · log|DCT|</strong></div>
+            <div class="spec-row"><span>Fused Dim</span><strong>704-dim (512 temporal + 192 freq)</strong></div>
+            <div class="spec-row"><span>Curriculum</span><strong>Progressive 5→10→16 frames/video</strong></div>
+            <div class="spec-row"><span>LSTM</span><strong>pack_padded_sequence · Xavier + Ortho init</strong></div>
+            <div class="spec-row"><span>SWA</span><strong>Epoch 15 · cosine anneal 5ep/group</strong></div>
+            <div class="spec-row"><span>CV</span><strong>5-fold OOF (all folds, one session)</strong></div>
+          </div>
+          <div class="mcard-output">
+            <span>Output:</span><code>cnn_predictions_swin_oof_MASTER.csv</code>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Anti-Leakage callout -->
+      <div class="callout-box">
+        <div class="callout-icon">🔒</div>
+        <div>
+          <strong>Identity-Aware Anti-Leakage Design</strong>
+          <p>Every model uses <code>StratifiedGroupKFold</code> where groups are person identities extracted from filenames. Zero identity overlap between train and validation is verified by assertion before every training run — the primary source of inflated metrics in deepfake detection literature.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-pulse"></span>
+        <span class="brand-name">NeuroPulse</span>
+      </div>
+      <p class="footer-desc">
+        Multi-Modal Deepfake Detection · rPPG + EfficientNet-B4 + Xception + Swin-Tiny<br>
+        FaceForensics++ · Celeb-DF v2 · DFDC · Custom Dataset · Bootstrap 95% CI
       </p>
-    </section>
-  </main>
+      <div class="footer-refs">
+        <span>Key references:</span>
+        FakeCatcher TPAMI'23 ·
+        de Haan &amp; Jeanne TBME'13 ·
+        EfficientNet ICML'19 ·
+        Xception CVPR'17 ·
+        Swin ICCV'21 ·
+        FocalLoss ICCV'17
+      </div>
+    </div>
+  </footer>
 
-  <script src="app.js"></script>
+  <script>
+/* ══════════════════════════════════════════════════════
+   NeuroPulse · app.js
+   Neural canvas animation + Inference logic
+══════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   1.  NEURAL CANVAS BACKGROUND ANIMATION
+──────────────────────────────────────────── */
+(function initNeuralCanvas() {
+  const canvas = document.getElementById("neural-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const COLORS = ["#00c8ff", "#00ff9d", "#4ab5ff", "#c77dff", "#ffb347"];
+  const NODE_COUNT = 55;
+  const MAX_DIST = 180;
+
+  let W, H, nodes;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function makeNode() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 2.2 + 0.8,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      pulse: Math.random() * Math.PI * 2,
+    };
+  }
+
+  function init() {
+    resize();
+    nodes = Array.from({ length: NODE_COUNT }, makeNode);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Update
+    for (const n of nodes) {
+      n.x += n.vx;
+      n.y += n.vy;
+      n.pulse += 0.025;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+    }
+
+    // Draw edges
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > MAX_DIST) continue;
+
+        const alpha = (1 - dist / MAX_DIST) * 0.18;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(0,200,255,${alpha})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+
+    // Draw nodes
+    for (const n of nodes) {
+      const pAlpha = 0.5 + 0.5 * Math.sin(n.pulse);
+      // Outer glow
+      const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 6);
+      grd.addColorStop(0, n.color + "40");
+      grd.addColorStop(1, n.color + "00");
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * 6, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Core dot
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.globalAlpha = 0.5 + 0.5 * pAlpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener("resize", () => {
+    resize();
+    nodes = Array.from({ length: NODE_COUNT }, makeNode);
+  });
+
+  init();
+  draw();
+})();
+
+
+/* ────────────────────────────────────────────
+   2.  DOM ELEMENT REFS
+──────────────────────────────────────────── */
+const form        = document.getElementById("predict-form");
+const videoInput  = document.getElementById("video-input");
+const videoMeta   = document.getElementById("video-meta");
+const dzTitle     = document.getElementById("dz-title");
+const dzIcon      = document.getElementById("dz-icon");
+const submitBtn   = document.getElementById("submit-btn");
+const btnText     = document.getElementById("btn-text");
+const statusPill  = document.getElementById("status-pill");
+const uploadZone  = document.getElementById("upload-zone");
+
+// Result elements
+const probabilityEl = document.getElementById("probability");
+const labelEl       = document.getElementById("label");
+const predictionEl  = document.getElementById("prediction");
+const confidenceEl  = document.getElementById("confidence");
+const modelEl       = document.getElementById("model");
+const debugEl       = document.getElementById("debug");
+const ringArc       = document.getElementById("ring-arc");
+
+// Stream bars
+const barRppg  = document.getElementById("bar-rppg");
+const barEff   = document.getElementById("bar-eff");
+const barXcep  = document.getElementById("bar-xcep");
+const barSwin  = document.getElementById("bar-swin");
+const valRppg  = document.getElementById("val-rppg");
+const valEff   = document.getElementById("val-eff");
+const valXcep  = document.getElementById("val-xcep");
+const valSwin  = document.getElementById("val-swin");
+
+/* ────────────────────────────────────────────
+   3.  CONFIG
+──────────────────────────────────────────── */
+const RING_CIRCUMFERENCE = 2 * Math.PI * 62; // r=62 → ≈389.56
+
+const API_BASE =
+  window.location.port === "8000"
+    ? window.location.origin
+    : "http://127.0.0.1:8000";
+
+/* ────────────────────────────────────────────
+   4.  STATUS PILL
+──────────────────────────────────────────── */
+function setStatus(text, type = "idle") {
+  statusPill.textContent = text;
+  statusPill.className = `pill pill-${type}`;
+}
+
+/* ────────────────────────────────────────────
+   5.  RING METER
+──────────────────────────────────────────── */
+function updateRing(probability) {
+  const p = Math.max(0, Math.min(1, Number(probability) || 0));
+  const offset = RING_CIRCUMFERENCE * (1 - p);
+  ringArc.style.strokeDashoffset = String(offset);
+
+  // Color transitions: green → amber → red
+  let color;
+  if (p < 0.4) {
+    color = "#00ff9d";  // safe green
+  } else if (p < 0.65) {
+    color = "#ffb347";  // warning amber
+  } else {
+    color = "#ff5c5c";  // danger red
+  }
+  ringArc.style.stroke = color;
+}
+
+/* ────────────────────────────────────────────
+   6.  STREAM BARS
+──────────────────────────────────────────── */
+function updateStreamBars(data) {
+  const streams = [
+    { bar: barRppg,  val: valRppg,  key: "P_rPPG" },
+    { bar: barEff,   val: valEff,   key: "P_efficientnet" },
+    { bar: barXcep,  val: valXcep,  key: "P_xception" },
+    { bar: barSwin,  val: valSwin,  key: "P_swin" },
+  ];
+
+  for (const s of streams) {
+    const raw = data[s.key];
+    if (raw !== undefined && raw !== null) {
+      const p = Math.max(0, Math.min(1, Number(raw)));
+      s.bar.style.width = `${(p * 100).toFixed(1)}%`;
+      s.val.textContent = p.toFixed(3);
+    } else {
+      // If individual stream probs not returned, show ensemble spread
+      s.bar.style.width = "0%";
+      s.val.textContent = "—";
+    }
+  }
+}
+
+/* ────────────────────────────────────────────
+   7.  UPDATE RESULT PANEL
+──────────────────────────────────────────── */
+function updateResult(data) {
+  const p = Number(data.probability);
+
+  // Ring & probability
+  probabilityEl.textContent = p.toFixed(3);
+  updateRing(p);
+
+  // KV fields
+  labelEl.textContent      = data.label      ?? "—";
+  predictionEl.textContent = data.prediction != null ? String(data.prediction) : "—";
+  confidenceEl.textContent = data.confidence != null
+    ? `${Number(data.confidence).toFixed(2)}%`
+    : "—";
+  modelEl.textContent = data.model_name ?? "—";
+
+  // Stream bars
+  updateStreamBars(data);
+
+  // Debug JSON
+  debugEl.textContent = JSON.stringify(data, null, 2);
+
+  // Color-code probability display
+  probabilityEl.style.color =
+    p >= 0.65 ? "var(--red)" :
+    p >= 0.4  ? "var(--amber)" :
+    "var(--green)";
+}
+
+/* ────────────────────────────────────────────
+   8.  RESET RESULT PANEL
+──────────────────────────────────────────── */
+function resetResult() {
+  probabilityEl.textContent = "—";
+  probabilityEl.style.color = "var(--text-bright)";
+  labelEl.textContent      = "—";
+  predictionEl.textContent = "—";
+  confidenceEl.textContent = "—";
+  modelEl.textContent      = "—";
+  debugEl.textContent      = "{}";
+  updateRing(0);
+  for (const bar of [barRppg, barEff, barXcep, barSwin]) bar.style.width = "0%";
+  for (const v of [valRppg, valEff, valXcep, valSwin]) v.textContent = "—";
+}
+
+/* ────────────────────────────────────────────
+   9.  VIDEO FILE METADATA
+──────────────────────────────────────────── */
+function updateFileMeta(file) {
+  if (!file) {
+    dzTitle.textContent = "Drop video here or click to browse";
+    videoMeta.textContent = "mp4 · avi · mov · mkv · webm · max 500MB";
+    submitBtn.disabled = true;
+    btnText.textContent = "Select a Video First";
+    return;
+  }
+
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+  const ext    = file.name.split(".").pop().toUpperCase();
+
+  dzTitle.textContent    = `✔ ${file.name}`;
+  videoMeta.textContent  = `${ext} · ${sizeMB} MB`;
+  submitBtn.disabled     = false;
+  btnText.textContent    = "Analyze Video";
+  setStatus("Video ready · Click Analyze to run ensemble", "idle");
+}
+
+/* ────────────────────────────────────────────
+   10.  EVENT LISTENERS — FILE INPUT
+──────────────────────────────────────────── */
+videoInput.addEventListener("change", () => {
+  updateFileMeta(videoInput.files?.[0] ?? null);
+});
+
+/* Drag and drop */
+uploadZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadZone.classList.add("drag-over");
+});
+
+uploadZone.addEventListener("dragleave", () => {
+  uploadZone.classList.remove("drag-over");
+});
+
+uploadZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove("drag-over");
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  videoInput.files = dt.files;
+  updateFileMeta(file);
+});
+
+/* ────────────────────────────────────────────
+   11.  FORM SUBMIT — INFERENCE
+──────────────────────────────────────────── */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const file = videoInput.files?.[0];
+  if (!file) {
+    setStatus("Please upload a video file", "error");
+    return;
+  }
+
+  // Validate size (500 MB)
+  if (file.size > 500 * 1024 * 1024) {
+    setStatus("File exceeds 500 MB limit", "error");
+    return;
+  }
+
+  // UI: start loading
+  submitBtn.disabled    = true;
+  btnText.textContent   = "Running Ensemble Inference…";
+  resetResult();
+  setStatus("Extracting features across 4 streams…", "loading");
+
+  const formData = new FormData();
+  formData.append("video", file);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/predict`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = await res.json();
+
+    if (!res.ok) {
+      const detail = payload.detail || `HTTP ${res.status}`;
+      throw new Error(detail);
+    }
+
+    updateResult(payload);
+    setStatus("Ensemble inference complete", "ok");
+
+  } catch (err) {
+    setStatus(`Inference failed: ${err.message}`, "error");
+    debugEl.textContent = String(err);
+    console.error("[NeuroPulse] Inference error:", err);
+  } finally {
+    submitBtn.disabled  = false;
+    btnText.textContent = "Analyze Video";
+  }
+});
+
+/* ────────────────────────────────────────────
+   12.  SCROLL REVEAL
+──────────────────────────────────────────── */
+(function initScrollReveal() {
+  const revealTargets = document.querySelectorAll(
+    ".glass-card, .mcard, .stream, .ensemble-node, .callout-box, .pipe-row"
+  );
+
+  if (!("IntersectionObserver" in window)) {
+    revealTargets.forEach(el => {
+      el.style.opacity = "1";
+      el.style.transform = "none";
+    });
+    return;
+  }
+
+  // Set initial state
+  revealTargets.forEach(el => {
+    el.style.opacity = "0";
+    el.style.transform = "translateY(16px)";
+    el.style.transition = "opacity 600ms ease, transform 600ms ease";
+  });
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = "1";
+          entry.target.style.transform = "none";
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+
+  revealTargets.forEach(el => observer.observe(el));
+})();
+
+/* ────────────────────────────────────────────
+   13.  INIT
+──────────────────────────────────────────── */
+setStatus("Upload a video to start", "idle");
+updateRing(0);
+submitBtn.disabled  = true;
+btnText.textContent = "Select a Video First";
+
+  </script>
 </body>
 </html>

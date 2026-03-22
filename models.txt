@@ -1,0 +1,4 @@
+efficientnet : https://www.kaggle.com/code/swapnavasireddy/efficientnet2/notebook
+xception : https://www.kaggle.com/code/lalith023/xception/notebook
+swin : https://www.kaggle.com/code/swapnavasireddy/swinnnnn-2/log?scriptVersionId=305555175
+rppg : https://www.kaggle.com/code/likhithvasireddy/rppg-1/log?scriptVersionId=305584262
