@@ -1,0 +1,12 @@
+runtime: python311
+
+handlers:
+  - url: /
+    static_files: architecture.html
+    upload: architecture.html
+    secure: always
+
+  - url: /(.*)
+    static_files: \1
+    upload: (.*)
+    secure: always

@@ -29,5 +29,25 @@ jobs:
       - name: Configure project
         run: gcloud config set project ${{ fromJSON(secrets.GCP_CREDENTIALS).project_id }}
 
+      - name: Ensure deployment files exist
+        run: |
+          test -f architecture.html
+          if [ ! -f app.yaml ]; then
+            cat > app.yaml <<'YAML'
+            runtime: python311
+
+            handlers:
+              - url: /
+                static_files: architecture.html
+                upload: architecture.html
+                secure: always
+
+              - url: /(.*)
+                static_files: \1
+                upload: (.*)
+                secure: always
+            YAML
+          fi
+
       - name: Deploy to App Engine
         run: gcloud app deploy app.yaml --quiet
