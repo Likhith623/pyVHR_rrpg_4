@@ -30,23 +30,24 @@ jobs:
         run: gcloud config set project ${{ fromJSON(secrets.GCP_CREDENTIALS).project_id }}
 
       - name: Ensure deployment files exist
+        shell: bash
         run: |
           test -f "${GITHUB_WORKSPACE}/architecture.html"
           if [ ! -f "${GITHUB_WORKSPACE}/app.yaml" ]; then
-            cat > "${GITHUB_WORKSPACE}/app.yaml" <<'YAML'
-            runtime: python311
-
-            handlers:
-              - url: /
-                static_files: architecture.html
-                upload: architecture.html
-                secure: always
-
-              - url: /(.*)
-                static_files: \1
-                upload: (.*)
-                secure: always
-            YAML
+            printf '%s\n' \
+              'runtime: python311' \
+              '' \
+              'handlers:' \
+              '  - url: /' \
+              '    static_files: architecture.html' \
+              '    upload: architecture.html' \
+              '    secure: always' \
+              '' \
+              '  - url: /(.*)' \
+              '    static_files: \1' \
+              '    upload: (.*)' \
+              '    secure: always' \
+              > "${GITHUB_WORKSPACE}/app.yaml"
           fi
 
       - name: Debug deployment files
