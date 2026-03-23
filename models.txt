@@ -1,7 +1,7 @@
-efficientnet : https://www.kaggle.com/code/swapnavasireddy/efficientnet2/notebook
-xception : https://www.kaggle.com/code/lalith023/xception/notebook
-swin : https://www.kaggle.com/code/swapnavasireddy/swinnnnn-2/log?scriptVersionId=305555175
-rppg : https://www.kaggle.com/code/likhithvasireddy/rppg-1/log?scriptVersionId=305584262
+efficientnet model : https://www.kaggle.com/code/swapnavasireddy/efficientnet2/notebook
+xception model : https://www.kaggle.com/code/lalith023/xception/notebook
+swin model : https://www.kaggle.com/code/swapnavasireddy/swinnnnn-2/log?scriptVersionId=305555175
+rppg model : https://www.kaggle.com/code/likhithvasireddy/rppg-1/log?scriptVersionId=305584262
 
 
 
@@ -10,4 +10,3 @@ rppg : https://www.kaggle.com/code/likhithvasireddy/rppg-1/log?scriptVersionId=3
 Ensemble evaluation scope: "The 4-model ensemble is evaluated on the fold-0 validation split (~20% of the dataset). The Swin-Tiny stream provides full 5-fold OOF predictions; EfficientNet and Xception are evaluated on fold 0 only."
 Grid-search weights: "The optimal weighted ensemble weights were selected on the validation set used for evaluation; reported AUC for this strategy represents an upper bound."
 
-These are standard caveats in ensemble papers and don't invalidate your results.
