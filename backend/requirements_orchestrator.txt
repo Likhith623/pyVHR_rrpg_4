@@ -1,0 +1,11 @@
+# requirements_orchestrator.txt
+# For orchestrator.py (port 8000) — no torch, no mediapipe
+# python -m venv venv_orch && pip install -r requirements_orchestrator.txt
+
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+httpx[asyncio]>=0.27.0
+numpy>=1.24.0
+scipy>=1.11.0
+joblib>=1.3.0

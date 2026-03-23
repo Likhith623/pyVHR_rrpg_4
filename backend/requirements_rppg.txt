@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# requirements_rppg.txt
+#
+# Isolated environment for service_rppg.py (port 8001)
+# 
+# RIGOROUSLY PINNED TO MATCH KAGGLE TRAINING ENVIRONMENT (Python 3.12.12)
+# Prevents C-level segmentation faults during joblib.load()
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# Web framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+
+# Numerical & signal processing (EXACT MATCH)
+numpy==2.0.2
+scipy==1.16.3
+
+# Computer vision (Updated for macOS ARM64 compatibility)
+opencv-python-headless==4.13.0.92
+
+# MediaPipe — physiological rPPG signal analysis (EXACT MATCH)
+mediapipe==0.10.14
+
+# ML pipeline — rPPG stacking ensemble (EXACT MATCH)
+scikit-learn==1.6.1
+joblib==1.5.3
+xgboost==3.2.0
+lightgbm==4.6.0

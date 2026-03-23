@@ -1699,7 +1699,7 @@ body {
                   <div class="sb-track"><div class="sb-fill eff-fill" id="bar-eff" style="width:0%"></div></div>
                   <span class="sb-val" id="val-eff">—</span>
                 </div>
-                <div class="sb-row">
+                <div class="sb-row" id="xcep-row" style="display:none">
                   <span class="sb-name" style="color:var(--purple)">Xcep</span>
                   <div class="sb-track"><div class="sb-fill xcep-fill" id="bar-xcep" style="width:0%"></div></div>
                   <span class="sb-val" id="val-xcep">—</span>
@@ -1974,14 +1974,12 @@ const modelEl       = document.getElementById("model");
 const debugEl       = document.getElementById("debug");
 const ringArc       = document.getElementById("ring-arc");
 
-// Stream bars
+// Stream bars (3-stream microservices: rPPG :8001, EfficientNet :8002, Swin :8003)
 const barRppg  = document.getElementById("bar-rppg");
 const barEff   = document.getElementById("bar-eff");
-const barXcep  = document.getElementById("bar-xcep");
 const barSwin  = document.getElementById("bar-swin");
 const valRppg  = document.getElementById("val-rppg");
 const valEff   = document.getElementById("val-eff");
-const valXcep  = document.getElementById("val-xcep");
 const valSwin  = document.getElementById("val-swin");
 
 /* ────────────────────────────────────────────
@@ -2026,10 +2024,10 @@ function updateRing(probability) {
    6.  STREAM BARS
 ──────────────────────────────────────────── */
 function updateStreamBars(data) {
+  // Keys match orchestrator response: P_rPPG (svc :8001), P_efficientnet (svc :8002), P_swin (svc :8003)
   const streams = [
     { bar: barRppg,  val: valRppg,  key: "P_rPPG" },
     { bar: barEff,   val: valEff,   key: "P_efficientnet" },
-    { bar: barXcep,  val: valXcep,  key: "P_xception" },
     { bar: barSwin,  val: valSwin,  key: "P_swin" },
   ];
 
@@ -2090,8 +2088,8 @@ function resetResult() {
   modelEl.textContent      = "—";
   debugEl.textContent      = "{}";
   updateRing(0);
-  for (const bar of [barRppg, barEff, barXcep, barSwin]) bar.style.width = "0%";
-  for (const v of [valRppg, valEff, valXcep, valSwin]) v.textContent = "—";
+  for (const bar of [barRppg, barEff, barSwin]) bar.style.width = "0%";
+  for (const v of [valRppg, valEff, valSwin]) v.textContent = "—";
 }
 
 /* ────────────────────────────────────────────
@@ -2166,7 +2164,7 @@ form.addEventListener("submit", async (e) => {
   submitBtn.disabled    = true;
   btnText.textContent   = "Running Ensemble Inference…";
   resetResult();
-  setStatus("Extracting features across 4 streams…", "loading");
+  setStatus("Extracting features across 3 streams…", "loading");
 
   const formData = new FormData();
   formData.append("video", file);

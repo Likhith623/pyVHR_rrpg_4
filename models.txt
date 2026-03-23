@@ -1,7 +1,12 @@
-efficientnet : https://www.kaggle.com/code/swapnavasireddy/efficientnet2/notebook
-xception : https://www.kaggle.com/code/lalith023/xception/notebook
-swin : https://www.kaggle.com/code/swapnavasireddy/swinnnnn-2/log?scriptVersionId=305555175
-rppg : https://www.kaggle.com/code/likhithvasireddy/rppg-1/log?scriptVersionId=305584262
+efficientnet : https://www.kaggle.com/code/swapnavasireddy/efficientnet2/output
+xception : https://www.kaggle.com/code/lalith023/xception/output
+swin : https://www.kaggle.com/code/swapnavasireddy/swinnnnn-2/output?scriptVersionId=305555175
+rppg : https://www.kaggle.com/code/likhithvasireddy/rppg-1/output
+
+
+I trained all the models on Kaggle using the P100 GPU. Since I needed to train four models and Kaggle does not allow running multiple GPU notebooks simultaneously on a single account, I used my brother’s and my mother’s Kaggle accounts to run the trainings in parallel.
+
+
 
 
 
@@ -11,3 +16,14 @@ Ensemble evaluation scope: "The 4-model ensemble is evaluated on the fold-0 vali
 Grid-search weights: "The optimal weighted ensemble weights were selected on the validation set used for evaluation; reported AUC for this strategy represents an upper bound."
 
 These are standard caveats in ensemble papers and don't invalidate your results.
+
+
+
+What This System Actually Does
+Think of it like a panel of 4 independent detectives, each examining the same video through a completely different lens:
+Detective 1 — rPPG (Physiological): Looks for a heartbeat signal in the face. Real human skin subtly changes color with every pulse of blood. Deepfake-generated faces either have no heartbeat signal or an incoherent one. This runs on 9 facial regions using MediaPipe, extracts 117 features (heart rate, frequency spectrum, cross-region consistency), and feeds them to an XGBoost/LightGBM stack.
+Detective 2 — EfficientNet-B4: A visual pattern expert. Looks at 16 face frames and detects spatial artifacts — blending seams, texture inconsistencies, unnatural skin — that deepfake generators leave behind.
+Detective 3 — Xception + Frequency: Same visual job but also looks in the frequency domain (DCT/FFT). Compression artifacts from deepfake encoders show up as specific frequency signatures invisible to the naked eye.
+Detective 4 — Swin Transformer: Uses shifted-window attention to capture long-range relationships across the face, plus a DCT branch. More global than Xception.
+The Ensemble: Each detective outputs a P(fake) between 0 and 1. The Optuna-tuned weights [rPPG=0.11, EfficientNet=0.34, Swin=0.55] combine them into one final score. The reason this beats any single model is that they catch different kinds of fakes — a deepfake that fools the visual detectives might still have no heartbeat signal, and vice versa.
+Is this the right approach? Yes — this is exactly how serious deepfake detection research is done. The AUC of 0.808 vs 0.788 for the best single model validates that the diversity is real.

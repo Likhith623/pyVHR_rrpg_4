@@ -4,3 +4,11 @@ env/
 ENV/
 .venv
 .env
+
+# Heavy model artifacts
+backend/models/
+backend/rppg/
+backend/**/*.pth
+backend/**/*.pt
+backend/**/*.joblib
+backend/**/*.pkl
