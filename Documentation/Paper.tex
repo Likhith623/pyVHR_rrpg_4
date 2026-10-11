@@ -1,1273 +1,408 @@
+%  NeuroPulse -- Camera-Ready Copy (Springer LNNS / llncs)
+%  Compile: pdflatex main.tex  (run twice).  No BibTeX required.
+%  Required files in the same folder (llncs.cls + the 7 figures):
+%    EFFICIENTNET_evaluation_plots.png   EFFICIENTNET_training_curves.png
+%    EFFICIENTNET_gradcam_gallery.png    XCEPTION_evaluation_plots.png
+%    XCEPTION_training_curves.png        SWIN_evaluation_plots.png
+%    SWIN_training_curves.png
+% =====================================================================
+\documentclass{llncs}
 
-
-\documentclass[runningheads]{llncs}
-
-% ---------------------------------------------------------------
-% Packages
-% ---------------------------------------------------------------
 \usepackage[T1]{fontenc}
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext}
+\usepackage[varvw]{newtxmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{tikz}
 \usepackage{url}
-\usepackage{hyperref}
+\renewcommand\UrlFont{\rmfamily}
 
-% ---------------------------------------------------------------
+% ---- notation shortcuts ------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bh}{\mathbf{h}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bp}{\mathbf{p}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\Tcal}{T_{\mathrm{cal}}}
+\DeclareMathOperator{\sigm}{sigmoid}
+\DeclareMathOperator{\logit}{logit}
+\DeclareMathOperator{\clip}{clip}
+\DeclareMathOperator{\softmax}{softmax}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
 \begin{document}
 
-\title{NeuroPulse : Orthogonal Four-Stream Deepfake Video Detection via Haemodynamic Signal Analysis, Depthwise-Separable Spatio-Temporal Dual-Branch Attention, and Hierarchical Shifted-Window Transformer Late-Fusion Ensemble}
-\titlerunning{NeuroPulse: Four-Stream Deepfake Video Detection}
+\title{NeuroPulse: Orthogonal Four-Stream Deepfake Video Detection via Haemodynamic Signal Analysis, Depthwise-Separable Spatio-Temporal Dual-Branch Attention, and Hierarchical Shifted-Window Transformer Late-Fusion Ensemble}
 
-\author{G. Lalith Sathvik \and
+
+
+
+
+\author{Vasireddy Likhith Chowdary\textsuperscript{*} \and
+        Raushan Kumar Singh \and
+        G. Lalith Sathvik \and
         T. Dheeraj \and
         V. Siva Nikshya \and
-        K. Tejaswini \and
-        Vasireddy Likhith Chowdary \and
-        Raushan Kumar Singh}
-\authorrunning{Sathvik et al.}
+        K. Tejaswini}
 
-% NOTE: mark the corresponding author exactly as recorded in the signed LTP / consent record.
-\institute{Department of CSE, SRM AP University\\
-\email{lalithsathvik\_gaddam@srmap.edu.in},
-\email{Dheeraj\_thirunala@srmap.edu.in},
-\email{sivanikshya\_vishnumolakala@srmap.edu.in},
-\email{tejaswi\_katta@srmap.edu.in},
-\email{likhithchowdary\_vasireddy@srmap.edu.in},
-\email{raushankumar.s@srmap.edu.in}}
+\institute{\textsuperscript{*} Corresponding author: Vasireddy Likhith Chowdary\\
+Department of CSE, SRM AP University\\
+\email{likhithchowdary\_vasireddy@srmap.edu.in, raushankumar.s@srmap.edu.in, lalithsathvik\_gaddam@srmap.edu.in, Dheeraj\_thirunala@srmap.edu.in, sivanikshya\_vishnumolakala@srmap.edu.in, tejaswi\_katta@srmap.edu.in}}
+
 
 \maketitle
 
-% ---------------------------------------------------------------
 \begin{abstract}
-The rapid proliferation of deepfake video technology poses a critical
-threat to digital trust, demanding robust and generalizable detection
-systems. We present \textit{NeuroPulse}, a multi-modal detection
-framework comprising four complementary streams with model-specific
-training protocols: (1) a remote photoplethysmography (rPPG) classifier
-using a 117-dimensional physiological core augmented with 96 frequency-domain
-and 36 geometry features (249 dimensions in the final ML input) and an ML
-stacking ensemble; (2) an
-EfficientNet-B4 spatio-temporal CNN with bidirectional LSTM and
-multi-head self-attention; (3) a dual-branch Xception architecture with
-ECA channel attention and a parallel learned feature branch; and (4) a
-Swin-Tiny Transformer backbone with an on-the-fly discrete cosine
-transform (DCT) branch and a \texttt{pack\_padded\_sequence}-based
-BiLSTM. The CNN streams use identity-aware grouping, focal training,
-model-specific augmentation and stochastic weight averaging where
-applicable, while Swin-Tiny is evaluated using five-fold out-of-fold
-prediction. A late-fusion ensemble combines the three selected
-streams---rPPG, EfficientNet-B4 and Swin-Tiny---after score imputation
-and calibration, with ensemble weights obtained by Optuna TPE
-optimisation. The ensemble achieves an AUC-ROC of \textbf{0.8081}
-(95\% CI: 0.7856--0.8293) and an F1-score of 0.7335 on a 1,520-video
-fusion cohort evaluated using 10-fold OOF predictions, spanning
-FaceForensics++, Celeb-DF v2, DFDC, and a custom
-dataset --- yielding an AUC gain of 0.0197 over the best individual
-stream (Swin-Tiny, AUC=0.7884).
-
-\keywords{Deepfake detection \and rPPG \and EfficientNet \and Xception
-\and Swin Transformer \and BiLSTM \and multi-head attention \and focal
-loss \and ensemble learning \and DCT frequency analysis}
+Single-cue deepfake-video detectors may fail when synthesis weakens spatial artefacts or alters temporal consistency; identity overlap between data splits can also inflate estimates. NeuroPulse evaluates four architecturally distinct forensic streams. Here, ``orthogonal'' means separation of forensic mechanisms, not mathematical orthogonality or statistical independence. Stream~I derives a 117-dimensional, nine-region CHROM-rPPG descriptor for stacked classification. Stream~II combines EfficientNet-B4, a bidirectional LSTM and multi-head attention. Stream~III uses depthwise-separable Xception, Efficient Channel Attention, an auxiliary learned-feature branch and hard-example mining. Stream~IV combines Swin-Tiny, an analytic block-DCT descriptor and a packed-sequence BiLSTM. The late-fusion study examines iterative imputation, beta calibration, weight selection, temperature scaling and split-conformal prediction. On the reported corpus (1,754 videos and 1,042 recorded identity labels), the selected fusion uses rPPG, EfficientNet and Swin-Tiny, excluding Xception; it reports AUC 0.8081 (95\% CI: 0.7856--0.8293), an absolute gain of 0.020 over the Swin-only aligned-set result. This difference is not statistically significant (DeLong's test, $p{=}0.217$). The rPPG--Swin score correlation ($r{=}0.232$) is consistent with partial complementarity, not independence. The result remains exploratory pending reconciliation of score coverage and independent validation of the complete fusion-selection pipeline.
+\keywords{Deepfake detection \and Remote photoplethysmography \and Swin Transformer \and Efficient Channel Attention \and DCT frequency analysis \and Late-fusion ensemble}
 \end{abstract}
 
-% ---------------------------------------------------------------
+% =====================================================================
 \section{Introduction}
-% ---------------------------------------------------------------
+GANs~\cite{goodfellow2014gan}, face swaps and diffusion models~\cite{ho2020ddpm} enable high-fidelity portrait videos and raise risks of disinformation, identity fraud and non-consensual imagery~\cite{rossler2019ff,li2020celebdf}. Spatial and temporal artefacts may become less reliable as synthesis improves, while physiological cues offer a potentially complementary signal~\cite{ciftci2020fakecatcher}. Identity overlap between training and evaluation can inflate performance by rewarding identity recognition rather than forgery detection.
 
-Generative adversarial networks (GANs) and diffusion-based video
-synthesis methods have enabled the creation of highly convincing
-face-swap and face-reenactment videos --- collectively known as
-\textit{deepfakes} --- at negligible cost~\cite{rossler2019ff}. Their
-misuse in political disinformation, non-consensual imagery, and financial
-fraud has generated significant societal harm and accelerated research
-into automated detection.
+NeuroPulse evaluates four architecturally separated cue-processing pathways: haemodynamic, convolutional spatio-temporal, auxiliary learned-feature and hierarchical-transformer/DCT. In this paper, “orthogonal” describes this architectural separation; it does not claim vector-space orthogonality, zero score correlation or statistical independence. The contributions are: (1)~a four-stream evaluation; (2)~nine-region, 117-feature CHROM-rPPG; (3)~EfficientNet-B4, Xception and Swin-Tiny with BiLSTM/attention, ECA, MixUp/CutMix, hard-example mining and a frame curriculum; (4)~a comparison of imputation, calibration, fusion weighting and conformal prediction; and (5)~dataset-specific group splitting. The optimized fusion reported below selects three streams and excludes Xception; global cross-dataset identity deduplication and nested evaluation of the complete fusion pipeline are not established by the supplied evidence.
 
-Existing deepfake detectors broadly fall into two families.
-\textit{Spatial detectors} identify per-frame artifacts introduced by
-synthesis networks: blending boundaries, spectral anomalies, texture
-inconsistencies, and GAN fingerprints~\cite{chollet2017xception}.
-\textit{Temporal detectors} model physiological or motion signals across
-video frames: heartbeat-induced colour variation
-(rPPG)~\cite{ciftci2020fakecatcher}, blink patterns, and
-micro-expression consistency. Neither family alone generalises across all
-manipulation types and compression qualities.
-
-We address this limitation with \textbf{NeuroPulse}, a four-stream
-framework capturing spatial, spatio-temporal, frequency, and
-physiological cues. Our main contributions are:
-
-\begin{enumerate}
-    \item A 117-dimensional rPPG physiological core (CHROM method across
-    9 ROIs, capturing spectral, HRV, phase, and geometry markers), augmented
-    with 96 frequency-domain and 36 geometry features to form the 249-dimensional
-    final ML input, with a sanitisation, train-only percentile clipping,
-    zero-variance removal, RobustScaler and ExtraTrees feature-selection
-    pipeline followed by a three-model ML stacking ensemble (XGBoost,
-    LightGBM, HistGradBoost), achieving AUC = 0.628.
-    \item An EfficientNet-B4 + BiLSTM + MHA model with Focal Loss
-    ($\alpha{=}0.6$, $\gamma{=}2.0$), SWA, and 5-pass TTA, achieving
-    standalone AUC = 0.7390.
-    \item An Xception dual-branch model with ECA-Net channel attention
-    and a 256-dim parallel learned feature branch, achieving
-    AUC = 0.7848.
-    \item A Swin Transformer Tiny model with on-the-fly 128-dim DCT
-    features, \texttt{pack\_padded\_sequence} BiLSTM, and progressive
-    frame curriculum, achieving OOF AUC = 0.7891.
-    \item An Optuna TPE-optimised ensemble with temperature
-    calibration, MICE imputation, beta-calibration, and conformal
-    prediction, achieving \textbf{AUC = 0.8081}.
-\end{enumerate}
-
-% ---------------------------------------------------------------
 \section{Related Work}
-% ---------------------------------------------------------------
+FaceForensics++ documents manipulation and compression effects relevant to Xception-based detection~\cite{rossler2019ff,chollet2017xception}; Celeb-DF~\cite{li2020celebdf} provides a challenging benchmark, and frequency analysis has been used to study synthesis artefacts~\cite{frank2020leveraging}. EfficientNet scales network width, depth and resolution~\cite{tan2019efficientnet}. FakeCatcher~\cite{ciftci2020fakecatcher}, DeepRhythm~\cite{qi2020deeprhythm}, CHROM~\cite{dehaan2013chrom} and POS~\cite{wang2017pos} investigate physiological cues. Swin supplies shifted-window attention~\cite{liu2021swin}; ECA-Net supplies lightweight channel attention~\cite{wang2020eca}; calibration and conformal methods address score reliability and uncertainty~\cite{guo2017calibration,kull2017beta,vovk2005conformal}. NeuroPulse studies these cue families in one reported fusion pipeline, but its current heterogeneous evaluation protocols do not establish superiority over external methods.
 
-\noindent\textbf{Spatial CNN methods.} Rossler et al.~\cite{rossler2019ff}
-demonstrated that Xception fine-tuned on FaceForensics++ achieves strong
-detection at C23 compression but degrades at high compression.
-MesoNet~\cite{afchar2018mesonet} uses a compact CNN targeting mesoscopic
-properties. Li et al.~\cite{li2020celeb} proposed Celeb-DF as a harder
-benchmark, revealing significant performance drops for existing methods.
+% =====================================================================
+\section{Framework, Data and Pre-processing}
+\subsection{Four-Stream Architecture and Complementarity}
+NeuroPulse exploits complementary failure modes: compression may erase spatial artefacts while leaving physiological incoherence, whereas high-fidelity forgeries may defeat spatial detectors but lack coherent rPPG. Each stream $i\in\{1,\dots,4\}$ emits a fake probability $p_i\in[0,1]$ for late fusion (Fig.~\ref{fig:overview}).
 
-\noindent\textbf{Frequency-domain detectors.} Frank et
-al.~\cite{frank2020leveraging} showed that GAN artifacts are visible in
-the DCT frequency spectrum. Several works exploit DFT and DCT features
-without relying purely on spatial appearance.
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,
+ b/.style={draw,rounded corners=2pt,align=center,font=\scriptsize,inner sep=2.5pt},
+ a/.style={-stealth,thin}]
+\node[b,minimum height=2.3cm,text width=1.1cm] (in) at (0.75,0) {Input video\\[2pt] 60 / 16 frames};
+\node[b,text width=4.7cm] (s1) at (4.45,1.08) {\textbf{I}~Haemodynamic: CHROM rPPG, 9 ROIs, 117-d, stacking};
+\node[b,text width=4.7cm] (s2) at (4.45,0.36) {\textbf{II}~EfficientNet-B4 + BiLSTM + MHA};
+\node[b,text width=4.7cm] (s3) at (4.45,-0.36) {\textbf{III}~Xception + ECA + learned feature branch};
+\node[b,text width=4.7cm] (s4) at (4.45,-1.08) {\textbf{IV}~Swin-T + block-DCT + packed BiLSTM};
+\node[b,minimum height=2.3cm,text width=2.5cm] (f) at (8.55,0) {\textbf{Late fusion}\\MICE $\to$ beta calibration $\to$ Optuna weights $\bw$ $\to$ temperature $\Tcal$};
+\node[b,minimum height=2.3cm,text width=1.6cm] (o) at (11.3,0) {$\hat p$ and conformal set};
+\foreach \s in {s1,s2,s3,s4}{\draw[a] (in.east)--(\s.west); \draw[a] (\s.east)--(f.west);}
+\draw[a] (f.east)--(o.west);
+\end{tikzpicture}
+\caption{NeuroPulse architecture showing four complementary streams, calibrated late fusion, and uncertainty-aware prediction.}
+\label{fig:overview}
+\end{figure}
 
-\noindent\textbf{Physiological signal detectors.}
-FakeCatcher~\cite{ciftci2020fakecatcher} pioneered rPPG-based detection,
-exploiting the fact that GAN synthesis fails to preserve
-photoplethysmographic colour variation. DeepRhythm~\cite{qi2020deeprhythm}
-used CNN-extracted rPPG maps for the same purpose.
-
-\noindent\textbf{Transformers and attention.} The Swin
-Transformer~\cite{liu2021swin} introduced hierarchical shifted-window
-attention for efficient visual processing. ECA-Net~\cite{wang2020eca}
-provides a lightweight 1D convolution alternative to SE-Net channel
-attention. Ensemble methods have been applied in video forensics to
-combine complementary detectors; in this work the ensemble weights are
-optimised with Optuna~\cite{akiba2019optuna}.
-
-% ---------------------------------------------------------------
-\section{System Architecture}
-% ---------------------------------------------------------------
-
-The pipeline proceeds as follows. Face extraction is cached to disk as
-\texttt{.npy} arrays to eliminate redundant computation. The
-physiological stream (Model 1) extracts up to 60 frames uniformly
-sampled via \texttt{np.linspace} using MediaPipe
-FaceMesh~\cite{lugaresi2019mediapipe}, while the spatial-temporal
-streams (Models 2--4) use MTCNN~\cite{zhang2016mtcnn} to extract up to
-16 uniformly sampled frames; Swin-Tiny additionally uses a progressive
-5$\to$10$\to$16 frame curriculum during training. Face preprocessing is
-model-specific:
-EfficientNet-B4 uses MTCNN crops resized to $224{\times}224$ with a
-margin of 40 and \emph{no} eye-landmark rotational alignment; Xception
-and Swin-Tiny use MTCNN with landmark-based eye alignment and
-blur-quality handling, falling back to centre cropping when the
-detection-quality conditions are not met.
-
-Each model stream produces a scalar fake probability $p_i \in [0,1]$.
-MICE imputes missing scores, after which beta-calibration aligns score
-scales. The three-model subset (rPPG, EfficientNet, Swin-Tiny),
-excluding Xception from the final fusion, was selected by comparing
-closed-form AUC-weighted fusion strategies, and the ensemble weights
-were then optimised with Optuna TPE. The calibrated ensemble computes:
+\subsection{Corpus and Identity-Disjoint Evaluation}
+The consolidated corpus combines FaceForensics++~\cite{rossler2019ff} (C23: originals plus Deepfakes, Face2Face, FaceSwap, NeuralTextures, FaceShifter and DeepFakeDetection, up to 200 each), Celeb-DF~v2~\cite{li2020celebdf} (150+50 real, 200 synthesised), a DFDC sample~\cite{dolhansky2020dfdc} and a custom 400+400 corpus. Balancing, $n_{\mathrm{balanced}}=\min(|\mathcal R|,|\mathcal F|)$, gives 877 real and 877 fake videos (1,754 total) across 1,042 dataset-recorded identity labels. Dataset-specific keys (source-video number, celebrity identifier, filename or person index) support stratified group $K$-fold ($K{=}5$) evaluation within each dataset, enforcing for each fold $q$,
 \begin{equation}
-  \hat{p} = \text{sigmoid}\!\left(\frac{\text{logit}(\mathbf{w}^\top
-  \mathbf{p})}{T}\right)
+\bigl(\mathrm{ID}^{(q)}_{\mathrm{train}}\cap \mathrm{ID}^{(q)}_{\mathrm{val}}\bigr)=\emptyset ,
+\label{eq:leak}
 \end{equation}
-where $\mathbf{w}$ are the Optuna-TPE-optimised weights and
-$T{=}0.7109$ is the learned temperature scalar.
+verified by assertion before every run; thresholds are tuned on validation data only. These checks establish separation under dataset-local keys; no cross-dataset person-resolution or duplicate-source audit is documented, so the manuscript does not claim global identity deduplication.
 
-% ---------------------------------------------------------------
-\section{Model 1: rPPG Physiological Stream}
-% ---------------------------------------------------------------
+\subsection{Face Localisation, Alignment and Quality Control}
+Stream~I uses MediaPipe FaceMesh~\cite{kartynnik2019facemesh} (468 landmarks) on up to 60 uniformly sampled frames; Streams~II--IV use MTCNN~\cite{zhang2016mtcnn} on $T{=}16$ uniform frames, with a centre-crop fallback. For Streams~III--IV, eye landmarks define roll as $\theta=\operatorname{arctan2}(\Delta y_{\mathrm{eyes}},\Delta x_{\mathrm{eyes}})$; crops are de-rotated when $|\theta|>2^{\circ}$ to reduce pose effects. Crops whose Laplacian variance $\Var[\nabla^{2}I]$ is below 20.0 are rejected as blurry.
 
-\subsection{Feature Extraction}
+% =====================================================================
+\section{Stream I: Haemodynamic rPPG Analysis}
+Cardiac blood-volume changes produce subtle skin-colour fluctuations (remote photoplethysmography, rPPG). Potential forensic cues are (1)~\emph{spatial coherence}: the pulse wave (roughly 5--10\,m/s) reaches facial regions with structured phase delays that synthesis may disrupt; (2)~\emph{spectral structure} in the 0.7--4\,Hz band; (3)~\emph{heart-rate-variability (HRV) proxies}; and (4)~\emph{phase synchronisation}~\cite{lachaux1999plv} between regions. These are candidate cues, not universal properties of every synthetic video.
 
-Remote photoplethysmography (rPPG) extracts the blood volume pulse (BVP)
-signal from facial colour variation caused by cardiac activity. We
-extract up to 60 frames via MediaPipe FaceMesh (468 landmarks) across 9
-facial ROIs to compute a 117-dimensional feature vector.
-
-\noindent\textbf{Missing-signal handling.} For each ROI signal, if the
-missing fraction is below 30\% the missing samples are linearly
-interpolated; if the missing fraction is 30\% or higher, the ROI signal
-is rejected (invalidated). The resulting signals are subsequently
-numerically sanitised.
-
-\noindent\textbf{CHROM BVP Extraction.} The CHROM
-method~\cite{dezwart2013chrom} decomposes skin-reflected light into
-chrominance channels to suppress specular noise:
-\begin{equation}
-  X_{\mathrm{CHROM}} = 3R - 2G, \quad
-  Y_{\mathrm{CHROM}} = 1.5R + G - 1.5B
-\end{equation}
-\begin{equation}
-  \mathrm{BVP}(t) = X_{\mathrm{CHROM}}(t) - \alpha\,
-  Y_{\mathrm{CHROM}}(t), \quad
-  \alpha = \operatorname{clip}\!\left(\frac{\sigma_X}{\sigma_Y},
-  0, 10\right)
-\end{equation}
-where $R, G, B$ are spatially averaged colour channels per ROI, and
-$\sigma_X, \sigma_Y$ are the standard deviations of $X_{\mathrm{CHROM}}$
-and $Y_{\mathrm{CHROM}}$ within each window. The signal is processed in
-1.6-s windows with 50\% overlap; the RGB channels are mean-normalised
-within each window, and the final BVP is reconstructed by overlap-add of
-the windowed estimates.
-A third-order zero-phase Butterworth band-pass filter with cut-off
-frequencies 0.7 and 4.0\,Hz is implemented using forward-backward
-filtering:
-\begin{equation}
-  (b,a) = \operatorname{Butterworth}\!\left(3,
-  \left[\frac{0.7}{f_N},\,\frac{4.0}{f_N}\right]\right), \qquad
-  s_f = \operatorname{filtfilt}(b,a,s)
-\end{equation}
-where $f_N$ is the Nyquist frequency and $s$ is the raw BVP signal. The
-passband corresponds to an HR range of 42--240 BPM.
-
-\noindent\textbf{117-Dimensional Feature Space.}
-\begin{itemize}
-    \item \textbf{Spectral (24):} 12 features for each of the two
-    principal ROIs: Welch's method~\cite{welch1967} SNR, spectral
-    purity, peak prominence, dominant frequency, harmonic ratio,
-    entropy, centroid, MAD, standard deviation, zero-crossing rate,
-    kurtosis, and skewness ($12\times2=24$).
-    \item \textbf{HRV (8):} RMSSD, SDNN, pNN50, pNN20, LF power
-    (0.04--0.15\,Hz), HF power (0.15--0.40\,Hz), LF/HF ratio, and total
-    power.
-    \item \textbf{Cross-ROI correlation (12):} 12 cross-ROI
-    correlation measures.
-    \item \textbf{Coherence (6):} six cross-ROI coherence features.
-    \item \textbf{Phase/BPM (5):} 5 phase and BPM features computed
-    from FFT/cross-spectral phase.
-    \item \textbf{Geometry (26):} Scale-invariant metrics from 468
-    facial landmarks.
-    \item \textbf{Extended signal/band/quality features (36):} eight
-    sub-groups: 5 signal-quality features, 9 multiband-power features,
-    5 cross-region BPM features, 5 temporal-stability features,
-    4 skin-reflection features, 3 SNR-dispersion features,
-    3 phase-synchronisation (PLV) features, and 2 RGB-correlation
-    features ($5+9+5+5+4+3+3+2=36$).
-\end{itemize}
-Together these give $24+8+12+6+5+26+36=117$ features.
-
-The Welch spectral estimates use the following parameters, where $T$ is
-the number of samples in the signal:
-\begin{equation}
-  n_{\mathrm{perseg}} = \min\!\left(256,\ \max\!\left(4,\
-  \lfloor T/2\rfloor\right)\right)
-\end{equation}
-\begin{equation}
-  n_{\mathrm{overlap}} = \min\!\left(128,\
-  \lfloor n_{\mathrm{perseg}}/2\rfloor\right), \qquad
-  n_{\mathrm{fft}} = 1024
-\end{equation}
-
-Phase synchronisation across ROI pairs is computed in the frequency
-domain from the FFT of the ROI signals $X_i(f)$:
-\begin{equation}
-  \phi_{ij}(f) = \arg\!\left(X_i(f)\,X_j^{*}(f)\right),
-  \qquad f\in[0.7,\,4.0]\ \mathrm{Hz}
-\end{equation}
-\begin{equation}
-  \mathrm{PLV}_{ij} = \left| \frac{1}{N_f} \sum_{f}
-  e^{j\phi_{ij}(f)} \right|
-\end{equation}
-where $N_f$ is the number of frequency bins in the band. The phase is
-obtained from the FFT/cross-spectral procedure of our implementation; it
-is \emph{not} derived from a Hilbert-transform output.
-
-\noindent\textbf{Final ML feature input (249-D).} The 117-dimensional
-vector above is the rPPG physiological core. For the executed stacking
-classifier, this core is augmented with 96 frequency-domain features
-(32 FFT-mean, 16 FFT-standard-deviation, 32 DCT-mean, and
-16 DCT-standard-deviation features) and 36 geometry features (26
-geometry-mean and 10 geometry-standard-deviation features), yielding a
-249-dimensional final ML input:
-\begin{equation}
-  \mathbf{x}_{\mathrm{ML}} = \left[\mathbf{x}_{\mathrm{rPPG}}^{117};\;
-  \mathbf{x}_{\mathrm{freq}}^{96};\;
-  \mathbf{x}_{\mathrm{geo}}^{36}\right] \in \mathbb{R}^{249}
-\end{equation}
-The auxiliary 2560-dimensional EfficientNet-B0 feature block is not
-included in the final classifier input.
-
-\subsection{ML Stacking Classifier}
-
-The 249-dimensional feature input $\mathbf{x}_{\mathrm{ML}}$
-(117-dimensional rPPG core plus the 96 frequency-domain and 36 geometry
-features) is classified by a stacking ensemble (v7.2). The
-preprocessing and classification pipeline is:
-\begin{enumerate}
-    \item large-value sanitisation / log transform of the input
-    features;
-    \item train-only 1st--99th percentile clipping;
-    \item zero-variance feature elimination;
-    \item \texttt{RobustScaler}, followed by clipping of the scaled
-    values to $[-10,10]$;
-    \item \texttt{ExtraTrees} feature selector (250 trees) with a
-    threshold of $1.2\times$ the mean importance;
-    \item base estimators: XGBoost ($n_{\mathrm{estimators}}{=}300$,
-    max\_depth${=}3$, learning rate $0.02$, subsample $0.8$,
-    colsample\_bytree $0.8$, $L_1{=}1$, $L_2{=}10$); LightGBM
-    ($n_{\mathrm{estimators}}{=}300$, max\_depth${=}3$,
-    num\_leaves${=}8$, learning rate $0.02$, subsample and feature
-    fraction $0.8$, $L_1{=}1$, $L_2{=}10$); HistGradientBoosting
-    (max\_iter${=}300$, max\_depth${=}5$, max\_leaf\_nodes${=}15$,
-    learning rate $0.02$, $L_2{=}5$);
-    \item a Logistic Regression meta-learner (balanced class weighting,
-    max\_iter${=}1000$) trained with internal 5-fold stacking.
-\end{enumerate}
-Training uses identity-aware GroupShuffleSplit (80/20). On the
-identity-aware held-out split of 331 videos, the standalone rPPG
-stacking classifier achieved AUC = 0.628, Accuracy = 0.5921, and
-F1 = 0.6110. On the fusion cohort the ensemble achieves
-AUC-ROC = 0.6283, Accuracy = 59.9\%, and F1 = 0.618.
-
-% ---------------------------------------------------------------
-\section{Model 2: EfficientNet-B4 Spatio-Temporal CNN}
-% ---------------------------------------------------------------
-
-\subsection{Architecture}
-
-The EfficientNet-B4 backbone~\cite{tan2019efficientnet} is loaded from
-\texttt{timm} (\texttt{drop\_path\_rate=0.2}, \texttt{global\_pool=avg}),
-producing a 1792-dim spatial feature per frame:
-\begin{equation}
-  \mathbf{f}_{b,t} = \text{EfficientNet-B4}(\mathbf{x}_{b,t})
-  \in \mathbb{R}^{1792}
-\end{equation}
-
-The 1792-dim sequence feeds a 2-layer bidirectional LSTM:
+Nine convex-hull regions (forehead centre, left/right forehead, cheeks, nose, chin and jaws) provide high capillary density and bilateral symmetry. For region mask $\Omega_r$ in frame $t$, mean RGB colour is extracted and CHROM~\cite{dehaan2013chrom} decomposes reflected light into chrominance channels to suppress specular noise:
 \begin{align}
-  \overrightarrow{\mathbf{h}}_t &= \text{LSTM}_{\text{fwd}}(\mathbf{f}_t,
-  \overrightarrow{\mathbf{h}}_{t-1}) \\
-  \overleftarrow{\mathbf{h}}_t &= \text{LSTM}_{\text{bwd}}(\mathbf{f}_t,
-  \overleftarrow{\mathbf{h}}_{t+1}) \\
-  \mathbf{h}_t &= [\overrightarrow{\mathbf{h}}_t;
-  \overleftarrow{\mathbf{h}}_t] \in \mathbb{R}^{512}
+\bar{\mathbf c}^{(r)}_t&=\frac{1}{|\Omega_r|}\sum_{(x,y)\in\Omega_r}\mathbf I_t(x,y),\\
+X_{\mathrm{CHROM}}&=3R-2G,\qquad Y_{\mathrm{CHROM}}=1.5R+G-1.5B,\\
+\mathrm{BVP}(t)&=X_{\mathrm{CHROM}}(t)-\frac{\sigma_X}{\sigma_Y}\,Y_{\mathrm{CHROM}}(t),
 \end{align}
-with hidden size 256 per direction and inter-layer dropout $p{=}0.5$.
-
-4-head Multi-Head Self-Attention~\cite{vaswani2017attention} with
-key-padding mask and attention dropout $p{=}0.5$, followed by dropout, a
-residual connection and layer normalisation:
+Here, $R,G,B$ are region-averaged RGB channels and $\sigma_X,\sigma_Y$ are sliding-window standard deviations. In the windowed implementation, mean-normalised signals $R_n,G_n,B_n$ give
+\begin{align}
+X_s&=3R_n-2G_n,\qquad Y_s=1.5R_n+G_n-1.5B_n,\\
+\alpha_c&=\clip\!\Bigl(\tfrac{\sigma(X_s)}{\sigma(Y_s)},\,0,\,10\Bigr),\qquad P=X_s-\alpha_c Y_s,
+\end{align}
+Window length is $w=\max(\lfloor 1.6\,f_s\rfloor,2)$ and step $s=\max(1,\lfloor w/2\rfloor)$ (50\% overlap), with overlap-add reconstruction. The signal is detrended and passed through a 3rd-order Butterworth band-pass~\cite{butterworth1930}
 \begin{equation}
-  \mathbf{A} = \text{MHA}_{p=0.5}(\mathbf{X},\mathbf{X},\mathbf{X}),
-  \quad \text{MHA}(\mathbf{Q},\mathbf{K},\mathbf{V}) =
-  \text{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}
-  \right)\mathbf{V}
+\lvert H(\mathrm{j}\omega)\rvert^{2}=\Bigl[1+\Bigl(\frac{\omega^{2}-\omega_L\omega_H}{(\omega_H-\omega_L)\,\omega}\Bigr)^{2n}\Bigr]^{-1},\qquad n=3,
 \end{equation}
+Cutoffs are $f_L{=}0.7$\,Hz and $f_H{=}4.0$\,Hz (42--240\,BPM). Gaps under 30\% of frames are linearly interpolated; POS~\cite{wang2017pos} is the fallback, and spectra use Welch's method~\cite{welch1967} with $n_{\mathrm{perseg}}{=}\min(256,\lfloor T/2\rfloor)$ and $n_{\mathrm{fft}}{=}1024$.
+
+The 117-dimensional descriptor includes \textbf{spectral} features (24: SNR, purity, prominence, dominant frequency, harmonic ratio, entropy, centroid and temporal statistics); \textbf{HRV and phase} (13: eight metrics including RMSSD, SDNN, pNN50 and LF/HF, plus five Hilbert phase/BPM features); \textbf{cross-ROI correlation/coherence} (18); \textbf{geometry} (26 scale-invariant landmark ratios); and \textbf{signal quality/extended bands} (36). Phase synchronisation across region pairs is
 \begin{equation}
-  \mathbf{A}' = \text{LN}\!\left(\mathbf{X} +
-  \text{Dropout}_{0.5}(\mathbf{A})\right)
+\mathrm{PLV}_{ab}=\left|\frac{1}{N}\sum_{t=1}^{N}e^{\,\mathrm{j}(\phi_a(t)-\phi_b(t))}\right|,
 \end{equation}
-where $\mathbf{X}$ is the BiLSTM output sequence. Masked average pooling
-produces a 512-dim video representation:
+Here $\mathrm{j}^{2}=-1$ and $\phi_a(t)$ is the instantaneous Hilbert phase~\cite{lachaux1999plv}. After percentile clipping, scaling and ExtraTrees selection, XGBoost~\cite{chen2016xgboost} (300 trees), LightGBM~\cite{ke2017lightgbm} (8 leaves) and HistGradientBoosting (300 iterations) feed a logistic-regression meta-learner through 5-fold stacked generalisation~\cite{wolpert1992stacking}, trained on an identity-aware 80/20 group split.
+
+% =====================================================================
+\section{Stream II: EfficientNet-B4 Spatio-Temporal Network}
+The EfficientNet-B4~\cite{tan2019efficientnet} (stochastic-depth rate 0.2; global average pooling) maps each frame $\bx_{b,t}$ to
 \begin{equation}
-  \mathbf{z} = \frac{\sum_{t=1}^{T} m_t \,\mathbf{a}'_t}
-  {\sum_{t=1}^{T} m_t}
+\mathbf f_{b,t}=\text{EfficientNet-B4}(\bx_{b,t})\in\R^{1792}.
 \end{equation}
-where $m_t \in \{0,1\}$ is the frame validity mask. The classifier head:
-Linear(512$\to$256) $\to$ LN $\to$ GELU $\to$ Dropout(0.5) $\to$
-Linear(256$\to$128) $\to$ LN $\to$ GELU $\to$ Dropout(0.25) $\to$
-Linear(128$\to$1).
-
-\subsection{Focal Loss with Label Smoothing}
-
-Following focal loss~\cite{lin2017focal}, with $p=\sigma(\hat{y})$:
+A 2-layer bidirectional LSTM~\cite{hochreiter1997lstm} models temporal inconsistency (256 hidden units per direction; inter-layer dropout 0.5):
+\begin{align}
+\overrightarrow{\bh}_t&=\mathrm{LSTM}_{\mathrm{fwd}}(\mathbf f_t,\overrightarrow{\bh}_{t-1}),\quad
+\overleftarrow{\bh}_t=\mathrm{LSTM}_{\mathrm{bwd}}(\mathbf f_t,\overleftarrow{\bh}_{t+1}),\\
+\bh_t&=[\overrightarrow{\bh}_t;\overleftarrow{\bh}_t]\in\R^{512}.
+\end{align}
+A 4-head self-attention layer~\cite{vaswani2017attention} with key-padding mask lets each frame attend across the sequence. Residual LayerNorm outputs $\mathbf a_t$ and validity mask $m_t\in\{0,1\}$ feed masked average pooling to produce the 512-d video representation:
+\begin{align}
+\mathrm{head}_h&=\softmax\!\left(\frac{\mathbf Q\mathbf W^{Q}_h(\mathbf K\mathbf W^{K}_h)^{\top}}{\sqrt{d_k}}\right)\mathbf V\mathbf W^{V}_h,\\
+\mathrm{MHA}&=[\mathrm{head}_1;\dots;\mathrm{head}_4]\,\mathbf W^{O},\qquad
+\bz=\frac{\sum_{t=1}^{T}m_t\,\mathbf a_t}{\sum_{t=1}^{T}m_t}.
+\end{align}
+A LayerNorm/GELU MLP head (512$\to$256$\to$128$\to$1; dropout 0.5, 0.25) classifies $\bz$. Focal loss~\cite{lin2017focal} down-weights easy samples using $\alpha{=}0.6$, $\gamma{=}2.0$, $p_t^{\mathrm{smooth}}=y(1-\epsilon)+0.5\epsilon$ and $\epsilon{=}0.1$:
+\begin{align}
+p_t&=\sigm(\hat y)\,y+(1-\sigm(\hat y))(1-y),\qquad \alpha_t=\alpha y+(1-\alpha)(1-y),\\
+\mathcal L_{\mathrm{FL}}&=-\mathbb E\!\left[\alpha_t(1-p_t)^{\gamma}\bigl(\tilde y\log\sigm(\hat y)+(1-\tilde y)\log(1-\sigm(\hat y))\bigr)\right].
+\end{align}
+MixUp~\cite{zhang2018mixup} is applied with probability 0.3 per batch; a cyclic batch shift guarantees non-identity pairing:
+\begin{align}
+\tilde{\bx}&=\lambda\bx_i+(1-\lambda)\bx_j,\quad \tilde y=\lambda y_i+(1-\lambda)y_j,\quad \lambda\sim\mathrm{Beta}(1.0,1.0),\\
+\mathcal L_{\mathrm{mix}}&=\lambda\,\mathcal L(\hat y,y_i)+(1-\lambda)\,\mathcal L(\hat y,y_j).
+\end{align}
+Stochastic weight averaging (SWA)~\cite{izmailov2018swa} from epoch 30 maintains the running mean
 \begin{equation}
-  p_t = y\,p + (1-y)(1-p), \qquad
-  \alpha_t = \alpha\,y + (1-\alpha)(1-y)
+\bar{\boldsymbol\theta}_n=\frac{n-1}{n}\,\bar{\boldsymbol\theta}_{n-1}+\frac{1}{n}\,\boldsymbol\theta_n ,
 \end{equation}
-\begin{equation}
-  y_s = y(1-\epsilon) + 0.5\,\epsilon
-\end{equation}
-\begin{equation}
-  \mathcal{L}_{\mathrm{FL}} = \alpha_t (1-p_t)^\gamma\,
-  \operatorname{BCEWithLogits}(\hat{y}, y_s)
-  \label{eq:focal}
-\end{equation}
-where $\alpha{=}0.6$, $\gamma{=}2.0$, and $\epsilon{=}0.1$.
+with the backbone learning rate held at $1/10$ of the base rate. Inference averages five test-time-augmentation (TTA) passes; gradient accumulation over four micro-batches of two videos gives an effective batch of 8. Figure~\ref{fig:eff} reports the training/evaluation curves, while Fig.~\ref{fig:gradcam} provides qualitative examples only.
 
-\subsection{MixUp Augmentation}
 
-MixUp~\cite{zhang2018mixup} is applied with probability 0.3 per training
-batch, with $\lambda\sim\mathrm{Beta}(1.0,1.0)$:
-\begin{equation}
-  \tilde{\mathbf{x}} = \lambda \mathbf{x}_i + (1-\lambda)\mathbf{x}_j,
-  \quad \lambda \sim \mathrm{Beta}(1.0, 1.0)
-\end{equation}
-\begin{equation}
-  \mathcal{L}_{\mathrm{mix}} = \lambda\,\mathcal{L}(\hat{y}, y_i) +
-  (1-\lambda)\,\mathcal{L}(\hat{y}, y_j)
-\end{equation}
-\texttt{torch.roll} with \texttt{shifts=1} guarantees a non-identity
-permutation at batch size 2.
 
-\subsection{Augmentation Pipeline and Optimisation}
-
-In addition to MixUp, the executed training pipeline applies the
-following image augmentations (probability $p$ in parentheses):
-HorizontalFlip (0.5), ShiftScaleRotate (0.3), RandomBrightnessContrast
-(0.5), HueSaturationValue (0.3), RGBShift (0.3), ImageCompression
-(0.2), Downscale (0.2), GaussNoise (0.3), GaussianBlur (0.2), ISONoise
-(0.2), CoarseDropout (0.3), and Posterize (0.1).
-
-Optimisation uses AdamW with learning rate $5\times10^{-5}$, weight
-decay $5\times10^{-4}$, a physical batch size of 2 and gradient
-accumulation of 4 (effective batch size 8), and gradient clipping at 1.0.
-The cosine warm-up/decay learning-rate schedule is the HuggingFace
-\texttt{get\_cosine\_schedule\_with\_warmup} scheduler, with warm-up
-ratio 0.1, stepped after each optimizer update (i.e. after gradient
-accumulation). With $S$ total optimizer-update steps and $W=0.1S$
-warm-up steps, its learning-rate factor is
-\begin{equation}
-  \lambda(s) = \begin{cases}
-  \dfrac{s}{W}, & s < W \\[6pt]
-  \dfrac{1+\cos\left(\pi\dfrac{s-W}{S-W}\right)}{2},
-  & W \le s < S.
-  \end{cases}
-\end{equation}
-The backbone is frozen for epochs 0--4 and unfrozen at epoch 5 with a
-backbone learning rate of $\mathrm{LR}/10$. SWA starts at epoch 30 and uses
-per-parameter-group SWA learning rates to preserve the backbone/head ratio:
-$\mathrm{LR}_{\mathrm{SWA,backbone}}{=}5\times10^{-6}$ and
-$\mathrm{LR}_{\mathrm{SWA,other}}{=}5\times10^{-5}$, with five SWA
-annealing epochs (the backbone remains at a 10:1 lower learning rate than
-the other groups). Early stopping uses an AUC patience of 25 epochs and a
-validation-loss patience of 15 epochs.
-
-At test time, 5-pass TTA is used: (1) the original image, (2) a
-horizontal flip, (3) brightness $+15$, (4) brightness $-15$, and
-(5) Gaussian blur with a $3\times3$ kernel; the five predictions are
-uniformly averaged.
-
-\subsection{Stochastic Weight Averaging and Checkpoint Selection}
-
-SWA~\cite{izmailov2018swa} is attempted from epoch 30:
-\begin{equation}
-  \bar{\boldsymbol{\theta}}_n = \frac{n-1}{n}\,
-  \bar{\boldsymbol{\theta}}_{n-1} + \frac{1}{n}\,\boldsymbol{\theta}_n
-\end{equation}
-The backbone LR is held at $1/10$ of the base rate. The reported model
-is the \emph{best checkpoint} (\texttt{best\_cnn\_model\_fold0.pth}),
-reached at epoch 31 with best validation AUC = 0.7394; this is distinct
-from the SWA checkpoint. Final metrics of the loaded best checkpoint
-(95\% CIs in brackets): AUC = 0.7390 [0.6838, 0.7857],
-Accuracy = 0.6921 [0.6431, 0.7358], F1 = 0.6762 [0.6144, 0.7283],
-EER = 0.3015 [0.2664, 0.3641].
-
-\subsection{Grad-CAM Visualisation}
-
-Grad-CAM~\cite{selvaraju2017gradcam} activation maps are computed on the
-EfficientNet-B4 \texttt{conv\_head} layer. For class score $y^c$ and
-feature maps $A^k$:
-\begin{equation}
-  \alpha_k^c = \frac{1}{Z}\sum_{i,j}
-  \frac{\partial y^c}{\partial A_{ij}^k}
-\end{equation}
-\begin{equation}
-  L_{\mathrm{GradCAM}}^c = \operatorname{ReLU}\!\left(
-  \sum_k \alpha_k^c A^k\right)
-\end{equation}
-
-% --- EFFICIENTNET IMAGES ---
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.30\textheight,
-    keepaspectratio]{EFFICIENTNET_evaluation_plots.png}
-  \caption{EfficientNet-B4 evaluation plots.}
-  \label{fig:eff_eval}
-\end{figure}
 
 \begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.30\textheight,
-    keepaspectratio]{EFFICIENTNET_training_curves.png}
-  \caption{EfficientNet-B4 training dynamics (fold 0). The best
-  validation AUC of 0.7394 is reached at epoch 31; the backbone is
-  unfrozen at epoch 5.}
-  \label{fig:efficientnet_train}
-\end{figure}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.55\textheight,
-    keepaspectratio]{EFFIEICIENTNET_ gradcam_gallery.png}
-  \caption{Grad-CAM visualizations of representative real and
-  manipulated frames showing the spatial activation patterns used by the
-  EfficientNet-B4 classifier (\texttt{conv\_head}).}
-  \label{fig:gradcam}
-\end{figure}
-
-% ---------------------------------------------------------------
-\section{Model 3: Xception Dual-Branch Architecture}
-% ---------------------------------------------------------------
-
-\subsection{Architecture}
-
-The \texttt{legacy\_xception} backbone~\cite{chollet2017xception} from
-\texttt{timm} produces 2048-dim spatially pooled features
-$\mathbf{F}\in\mathbb{R}^{2048}$. ECA-Net~\cite{wang2020eca} channel
-attention re-weights features before temporal modelling. The kernel
-size follows the rule
-\begin{equation}
-  k_0 = \left\lfloor \left|\frac{\log_2 C + b}{\gamma}\right|
-  \right\rfloor, \qquad
-  k = \begin{cases} k_0, & k_0 \text{ odd} \\ k_0 + 1, & k_0 \text{ even}
-  \end{cases}
-\end{equation}
-with $b{=}1$ and $\gamma{=}2$, and the channel re-weighting is
-\begin{equation}
-  \mathbf{g} = \sigma\!\left(\text{Conv1d}_k(\mathbf{F})\right),
-  \quad \hat{\mathbf{F}} = \mathbf{g} \odot \mathbf{F}
-\end{equation}
-For $C{=}2048$, $k{=}7$. In the temporal pathway, the ECA-weighted
-per-frame features undergo an input projection
-$2048\to512\to$ LN $\to$ GELU $\to$ Dropout(0.15), followed by a 2-layer
-bidirectional LSTM (hidden size 256 per direction) that gives a 512-dim
-representation $\mathbf{H}$ per frame. Dropout(0.3) is applied after the
-BiLSTM, before 4-head multi-head self-attention (attention dropout 0.15)
-with a residual connection and layer normalisation:
-\begin{equation}
-  \mathbf{A}' = \text{LN}\!\left(\mathbf{H} +
-  \text{MHA}(\mathbf{H},\mathbf{H},\mathbf{H})\right)
-\end{equation}
-Masked temporal pooling then yields the 512-dim temporal representation
-$\mathbf{z}_{\mathrm{temporal}}$.
-A \textbf{parallel learned feature branch},
-motivated by complementary compression-related representations,
-operates on the ECA-weighted representation (it does not perform an
-explicit FFT/DCT transform); it is
-$2048\to256\to$ LN $\to$ GELU $\to$ Dropout(0.15) $\to256\to$ LN:
-\begin{equation}
-  \mathbf{f}^{\mathrm{par}} = \text{LN}(\text{Linear}_{256}(
-  \text{Dropout}_{0.15}(\text{GELU}(\text{LN}(\text{Linear}_{256}(
-  \hat{\mathbf{F}})))))) \in \mathbb{R}^{256}
-\end{equation}
-Dual-stream fusion concatenates temporal and parallel-branch
-representations:
-\begin{equation}
-  \mathbf{z}_{\mathrm{fused}} = [\mathbf{z}_{\mathrm{temporal}};\;
-  \mathbf{z}_{\mathrm{par}}] \in \mathbb{R}^{768}
-\end{equation}
-The classifier: Linear(768$\to$256) $\to$ LN $\to$ GELU $\to$
-Dropout(0.3) $\to$ Linear(256$\to$128) $\to$ LN $\to$ GELU $\to$
-Dropout(0.15) $\to$ Linear(128$\to$1).
-
-The Xception focal loss uses the same binary focal-loss structure as
-Eq.~(\ref{eq:focal}), with the fold-specific $\alpha_{\mathrm{fold}}$
-and $\gamma=2.0$, and label smoothing $\epsilon=0.05$:
-\begin{equation}
-  p_t = y p + (1-y)(1-p), \qquad
-  \alpha_t = \alpha_{\mathrm{fold}} y +
-  (1-\alpha_{\mathrm{fold}})(1-y)
-\end{equation}
-\begin{equation}
-  y_s = y(1-\epsilon) + 0.5\epsilon
-\end{equation}
-\begin{equation}
-  \mathcal{L}_{\mathrm{Xception}} = \alpha_t(1-p_t)^\gamma
-  \operatorname{BCEWithLogits}(\hat{y},y_s).
-\end{equation}
-
-\subsection{Dynamic Focal Alpha and Hard Negative Mining}
-
-For the executed fold-0 experiment, the focal-loss $\alpha$ is computed
-from the training-class distribution as:
-\begin{equation}
-  \alpha_{\mathrm{fold}} = \frac{N_{\mathrm{real}}}{N_{\mathrm{real}}
-  + N_{\mathrm{fake}}}
-\end{equation}
-Hard negative mining activates at epoch 10 and is refreshed every 5
-epochs, with sample hardness:
-\begin{equation}
-  w_i = 1 - 2\left|p_i - 0.5\right|
-\end{equation}
-Samples near the decision boundary ($w_i \approx 1$) are up-sampled; the
-normalisation is class-balanced so that minority examples are not
-disproportionately oversampled.
-
-\subsection{MixUp + CutMix Curriculum}
-
-The augmentation is activated with probability 0.5 per batch. Within the
-activated batches, MixUp ($\lambda\sim\mathrm{Beta}(0.2,0.2)$) and
-CutMix~\cite{yun2019cutmix} ($\alpha{=}1.0$) are selected with equal
-probability. For MixUp:
-\begin{equation}
-  \tilde{\mathbf{x}} = \lambda\mathbf{x}_i +
-  (1-\lambda)\mathbf{x}_j, \qquad
-  \lambda\sim\mathrm{Beta}(0.2,0.2)
-\end{equation}
-For CutMix:
-\begin{equation}
-  \tilde{\mathbf{x}} = \mathbf{M} \odot \mathbf{x}_i +
-  (1-\mathbf{M}) \odot \mathbf{x}_j, \quad
-  \lambda_{\mathrm{adj}} = 1 - \frac{|B|}{HW}
-\end{equation}
-where $\mathbf{M}$ is a binary mask that is 0 inside the randomly
-sampled cut box $B$ and 1 elsewhere. The model achieves
-AUC = 0.7848 (95\% bootstrap CI [0.7341, 0.8310]), AP = 0.7598,
-Accuracy = 0.7139, F1 = 0.6892, Precision = 0.7089, Recall = 0.6707, and
-EER = 0.2688. The per-manipulation AUCs are reported in
-Table~\ref{tab:manip}. Per-manipulation AUC estimates
-are based on small subgroup sample sizes and should therefore be
-interpreted descriptively.
-
-\subsection{Optimisation and Unfreezing}
-
-The backbone is frozen for epochs 0--4 and is unfrozen at the
-configured epoch 5. The executed code then applies a three-epoch
-backbone learning-rate ramp over internal epoch indices
-$e\in\{5,6,7\}$:
-\begin{equation}
-  r_e = \frac{e-5}{3}, \qquad
-  \mathrm{LR}_{\mathrm{backbone}}(e) = \frac{\mathrm{LR}}{100} +
-  r_e\left(\frac{\mathrm{LR}}{10} - \frac{\mathrm{LR}}{100}\right),
-  \quad e\in\{5,6,7\}.
-\end{equation}
-With $\mathrm{LR}{=}10^{-4}$, this gives
-$10^{-6}$, $4\times10^{-6}$, and $7\times10^{-6}$ for internal
-epochs 5, 6, and 7, respectively; the explicit ramp is inactive after
-epoch 7. Training uses AdamW with weight decay $10^{-2}$, a physical
-batch size of 2 and gradient accumulation of 8 (effective batch size 16).
-The scheduler is \texttt{CosineAnnealingLR} with $T_{\max}{=}15$ and
-$\eta_{\min}{=}0.01\times10^{-4}{=}10^{-6}$, stepped per epoch (not
-per optimizer step). SWA uses $\mathrm{SWA\_LR}=5\times10^{-5}$ with
-three annealing epochs.
-
-\subsection{Augmentation and Test-Time Augmentation}
-
-Inputs are normalised with $\mu=\sigma=[0.5,0.5,0.5]$. The executed
-training transforms are listed in Table~\ref{tab:xc_aug}. At test time,
-6-pass TTA is used: (1) the original image, (2) a horizontal flip,
-(3) brightness $+15$, (4) brightness $-15$, (5) Gaussian blur with a
-$3\times3$ kernel, and (6) a $93\%$ centre crop followed by resize;
-the predictions are averaged.
-
-\begin{table}[!htbp]
 \centering
-\caption{Xception training augmentations.}
-\label{tab:xc_aug}
-\begin{tabular}{@{}llc@{}}
-\toprule
-\textbf{Transform} & \textbf{Parameters} & $p$ \\
-\midrule
-HorizontalFlip           & ---                                      & 0.5 \\
-ShiftScaleRotate         & $\pm5\%$ shift/scale, $\pm10^\circ$      & 0.3 \\
-RandomBrightnessContrast & $\pm0.2$                                 & 0.5 \\
-HueSaturationValue       & ---                                      & 0.3 \\
-RGBShift                 & $\pm15$                                  & 0.3 \\
-CLAHE                    & clip $=2.0$                              & 0.2 \\
-ImageCompression         & quality 40--100                          & 0.3 \\
-Downscale                & scale 0.6--0.9                           & 0.3 \\
-GaussNoise               & 0.04--0.12                               & 0.3 \\
-GaussianBlur             & ---                                      & 0.2 \\
-ISONoise                 & ---                                      & 0.2 \\
-CoarseDropout            & ---                                      & 0.2 \\
-Posterize                & ---                                      & 0.1 \\
-ElasticTransform         & $\alpha=60$, $\sigma=10$                 & 0.1 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[!htbp]
-\centering
-\caption{Xception per-manipulation AUC (descriptive; small subgroup
-sizes).}
-\label{tab:manip}
-\begin{tabular}{@{}lc@{}}
-\toprule
-\textbf{Manipulation} & \textbf{AUC} \\
-\midrule
-Deepfakes          & 0.8966 \\
-Face2Face          & 0.8611 \\
-FaceSwap           & 0.6853 \\
-NeuralTextures     & 0.7504 \\
-FaceShifter        & 0.6747 \\
-DeepFakeDetection  & 0.9578 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-% --- XCEPTION IMAGES ---
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.30\textheight,
-    keepaspectratio]{XCEPTION_training_curves.png}
-  \caption{Xception training curves (fold 0) across 40 epochs. Hard
-  negative mining activates at epoch 10 and SWA is attempted from
-  epoch 15; the reported checkpoint is selected from the training
-  history by validation AUC.}
-  \label{fig:xception_train}
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{EFFICIENTNET_training_curves.png}
+    \par\smallskip
+    {\small (a) Training}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{EFFICIENTNET_evaluation_plots.png}
+    \par\smallskip
+    {\small (b) Evaluation}
+\end{minipage}
+\caption{EfficientNet-B4 training (a) and evaluation (b); SWA from epoch 30 stabilises validation AUC near 0.739 at epoch 31.}
+\label{fig:eff}
 \end{figure}
 
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.30\textheight,
-    keepaspectratio]{XCEPTION_evaluation_plots.png}
-  \caption{Xception evaluation plots: ROC (AUC=0.7848),
-  precision-recall (AP=0.7598), confusion matrix, and score
-  distribution.}
-  \label{fig:xception_eval}
-\end{figure}
 
-% ---------------------------------------------------------------
-\section{Model 4: Swin Transformer with DCT Branch}
-% ---------------------------------------------------------------
 
-\subsection{Architecture}
-
-The \texttt{swin\_tiny\_patch4\_window7\_224}
-backbone~\cite{liu2021swin} (patch size 4, window size 7,
-\texttt{drop\_path\_rate=0.2}) yields
-768-dim spatial features via hierarchical shifted-window attention:
-\begin{equation}
-  \text{W-MSA}(\mathbf{Q},\mathbf{K},\mathbf{V}) =
-  \text{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d}}
-  + B\right)\mathbf{V}
-\end{equation}
-where $B$ is a learnable relative position bias. Padding frames are
-skipped during backbone computation:
-\begin{equation}
-  \mathbf{s}_t = \begin{cases}
-  \text{Swin}(\mathbf{x}_t) & m_t = 1 \\
-  \mathbf{0} & m_t = 0
-  \end{cases}
-\end{equation}
-The 768-dim per-frame features are projected to 384 dimensions and fed
-to a bidirectional LSTM producing a 512-dim representation per frame,
-followed by 4-head multi-head self-attention (attention dropout 0.15,
-i.e.\ half of the model dropout of 0.3), a residual connection with
-layer normalisation, and masked average pooling. The resulting 512-dim
-temporal vector is concatenated with the 192-dim DCT representation
-($512+192=704$).
-
-\subsection{Training Configuration}
-
-The Swin stream uses ECA channel attention whose kernel size follows
-the same rule as in the Xception stream,
-\begin{equation}
-  k_0 = \left\lfloor \left|\frac{\log_2 C + b}{\gamma}\right|
-  \right\rfloor, \qquad
-  k = \begin{cases} k_0, & k_0 \text{ odd} \\ k_0 + 1, & k_0 \text{ even}
-  \end{cases}
-\end{equation}
-with $b{=}1$, $\gamma{=}2$; for $C{=}768$ this gives
-$k_{\mathrm{ECA}}{=}5$. The classifier hidden dimension is 192, and
-early-stopping patience is 10. Training uses AdamW with learning rate
-$10^{-4}$, weight decay $10^{-2}$, physical batch size 2, and gradient
-accumulation of 4 (effective batch size 8). MixUp is activated from epoch 10, with
-$\lambda\sim\mathrm{Beta}(0.4,0.4)$; Swin uses MixUp only and does not
-use the Xception MixUp/CutMix alternation.
-The loss uses the same implementation structure as the focal loss in
-Eq.~(\ref{eq:focal}), with Swin-specific parameters
-$\alpha{=}0.5$, $\gamma{=}2.0$, and label smoothing $\epsilon{=}0.08$.
-
-Before SWA, the learning rate follows a \texttt{LambdaLR} schedule with
-warm-up ratio 0.1 and a minimum LR ratio of 0.1:
-\begin{equation}
-  \lambda(s) = \begin{cases}
-  \dfrac{s}{W}, & s < W \\[6pt]
-  0.1 + 0.9\cdot\dfrac{1+\cos(\pi p)}{2}, & s \ge W
-  \end{cases}
-\end{equation}
-where $s$ is the step index, $S$ is the total number of steps before
-SWA, $W=0.1S$ is the warm-up length, and
-$p=(s-W)/(S-W)$ is the normalised progress after warm-up. SWA starts at
-epoch 15 with
-per-group SWA learning rates that preserve the backbone/head LR ratio
-($10^{-6}$ for the backbone groups and $10^{-5}$ for the other groups),
-five annealing epochs, and cosine annealing.
-At test time, 6-pass TTA is used: (1) the original image, (2) a
-horizontal flip, (3) brightness scaling by $1.15$, (4) brightness scaling
-by $0.85$, (5) Gaussian blur with a $3\times3$ kernel, and (6) a $93\%$
-centre crop followed by resize; the predictions are uniformly averaged.
-
-\subsection{On-the-Fly DCT Frequency Branch}
-
-A 2D DCT matrix is pre-computed once as a \texttt{register\_buffer}:
-\begin{equation}
-  D_{k,n} = c_k \cos\!\left(
-  \frac{\pi k(2n+1)}{2N}\right), \quad k,n \in [0,N)
-\end{equation}
-with orthonormal scaling
-\begin{equation}
-  c_0 = \sqrt{\frac{1}{N}}, \qquad c_k = \sqrt{\frac{2}{N}},\;\; k>0
-\end{equation}
-\begin{equation}
-  \mathbf{X}_{\mathrm{DCT}} = \mathbf{D}\, \mathbf{I}_{\mathrm{gray}}\,
-  \mathbf{D}^\top
-\end{equation}
-Because the Swin input frames are ImageNet-normalised, the DCT branch
-first reverses that normalisation using the stored ImageNet mean and
-standard deviation. The resulting image is converted to grayscale and
-bilinearly downsampled to 64$\times$64:
-\begin{equation}
-  I_{\mathrm{gray}} = 0.299\,R + 0.587\,G + 0.114\,B
-\end{equation}
-Log-magnitude normalisation: $\hat{X}_{k,l} = \log(|X_{k,l}| +
-10^{-6})$. The 64$\times$64 matrix is divided into 64 non-overlapping
-8$\times$8 blocks; per-block statistics form a 128-dim feature vector:
-\begin{equation}
-  \mathbf{f}_{\mathrm{DCT}} = [\mu_{1}, \ldots, \mu_{64},
-  \sigma_{1}, \ldots, \sigma_{64}] \in \mathbb{R}^{128}
-\end{equation}
-A two-layer MLP encodes this to 192-dim frequency representation.
-
-\subsection{pack\_padded\_sequence BiLSTM}
-
-Variable-length sequences are packed for clean gradient flow:
-\begin{equation}
-  \ell_b = \sum_{t=1}^{T} m_{b,t}, \quad \forall b \in [B]
-\end{equation}
-LSTM weight initialisation: Xavier uniform for $\mathbf{W}_{ih}$,
-orthogonal for $\mathbf{W}_{hh}$, forget-gate bias $= 1.0$.
-The 704-dim fused classifier input:
-\begin{equation}
-  \mathbf{z} = [\mathbf{z}_{\mathrm{temporal}}^{512};\;
-  \mathbf{z}_{\mathrm{freq}}^{192}]
-\end{equation}
-followed by Linear(704$\to$192) $\to$ LN $\to$ GELU $\to$ Dropout(0.3)
-$\to$ Linear(192$\to$96) $\to$ LN $\to$ GELU $\to$ Dropout(0.15)
-$\to$ Linear(96$\to$1).
-
-\subsection{Progressive Frame Curriculum and 5-Fold OOF}
-
-Training uses the progressive frame schedule in
-Table~\ref{tab:frames}. OOF AUC across folds:
-0.7624, 0.8364, 0.8019, 0.7805, 0.7761; Mean = $0.7914 \pm 0.0258$.
-Combined OOF AUC = 0.7891 (95\% CI: 0.7683--0.8097, 1,000 bootstrap
-resamples) over 1,753 videos, with Accuracy = 0.7182 and F1 = 0.7212.
-
-\begin{table}[!htbp]
-\centering
-\caption{Swin-Tiny progressive frame schedule.}
-\label{tab:frames}
-\begin{tabular}{@{}cc@{}}
-\toprule
-\textbf{Epochs} & \textbf{Frames} \\
-\midrule
-0--4   & 5  \\
-5--14  & 10 \\
-15--39 & 16 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-% --- SWIN TRANSFORMER IMAGES ---
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.28\textheight,
-    keepaspectratio]{SWIN_training_curves.png}
-  \caption{Swin-Tiny Fold 5 training curves. The progressive frame
-  curriculum (5$\to$10$\to$16) is visible in the early dynamics.}
-  \label{fig:swin_train}
-\end{figure}
 
 \begin{figure}[!t]
-  \centering
-  \includegraphics[width=\textwidth, height=0.28\textheight,
-    keepaspectratio]{SWIN_evaluation_plots.png}
-  \caption{Swin-Tiny five-fold OOF evaluation results: ROC curve,
-  precision-recall curve, confusion matrix, and score distribution.}
-  \label{fig:swin_eval}
+\centering
+\includegraphics[width=\linewidth,height=3.8cm,keepaspectratio]{EFFICIENTNET_gradcam_gallery.png}
+\caption{Grad-CAM~\cite{selvaraju2017gradcam} maps (\texttt{conv\_head}) for three illustrative validation videos. The displayed activations are qualitative examples and do not establish general localization performance.}
+\label{fig:gradcam}
 \end{figure}
 
-% ---------------------------------------------------------------
-\section{Dataset and Training Setup}
-% ---------------------------------------------------------------
+% =====================================================================
+\section{Stream III: Depthwise-Separable Xception Dual-Branch Network}
+Xception~\cite{chollet2017xception} factorises convolution into per-channel depthwise filtering and pointwise $1{\times}1$ mixing, isolating blending-boundary and texture patterns before channel mixing. It yields 2048-d features per frame at $299{\times}299$. ECA-Net~\cite{wang2020eca} reweights pooled channels with a 1D convolution of adaptive kernel size:
+\begin{align}
+k&=\mathrm{odd}\!\left(\left\lceil\frac{\log_2 C+1}{2}\right\rceil\right),\\
+\mathbf g&=\sigm\!\bigl(\mathrm{Conv1d}_k(\mathrm{GAP}(\bF))\bigr),\qquad \hat{\bF}=\mathbf g\odot\bF .
+\end{align}
+For $C{=}2048$, $k{=}7$. A \emph{parallel learned-feature branch} projects attended features and is fused with the temporal (BiLSTM + MHA) representation. The displayed operation contains no explicit transform in the frequency domain, so it is not described here as a standalone frequency transform:
+\begin{align}
+\bz_{\mathrm{freq}}&=\mathrm{LN}\bigl(\mathrm{Linear}_{256}(\mathrm{GELU}(\mathrm{LN}(\mathrm{Linear}_{256}(\mathrm{GAP}(\hat{\bF}))))))\in\R^{256},\\
+\bz_{\mathrm{fused}}&=[\bz_{\mathrm{temporal}};\,\bz_{\mathrm{freq}}]\in\R^{768},
+\end{align}
+The classifier head is an MLP (768$\to$256$\to$128$\to$1; dropout 0.3, 0.15). Focal weights are recomputed per fold. From epoch 10, hard-example mining~\cite{shrivastava2016ohem} scores distance to the decision boundary; a class-normalised sampler refreshed every 5 epochs up-samples samples with $h_i\approx1$:
+\begin{align}
+\alpha_{\mathrm{fold}}&=\frac{N_{\mathrm{real}}}{N_{\mathrm{real}}+N_{\mathrm{fake}}},\\
+h_i&=1-2\,|p_i-0.5|.
+\end{align}
+With probability 0.3, MixUp ($\alpha{=}0.2$) or CutMix~\cite{yun2019cutmix} ($\alpha{=}1.0$) is selected equally often. CutMix simulates blended-face artefacts and encourages local artefact discrimination over global identity cues:
+\begin{equation}
+\tilde{\bx}=\mathbf M\odot\bx_i+(1-\mathbf M)\odot\bx_j,\qquad \lambda_{\mathrm{adj}}=\frac{\|\mathbf M\|_1}{HW},
+\end{equation}
+The mixed label is $\tilde y=\lambda_{\mathrm{adj}}y_i+(1-\lambda_{\mathrm{adj}})y_j$; Fig.~\ref{fig:xcep} shows the training and evaluation results.
 
-\subsection{Dataset}
-
-\begin{table}[!htbp]
+\begin{figure}[!t]
 \centering
-\caption{Dataset Composition (Balanced Master Set: 877 Real + 877 Fake)}
-\label{tab:dataset}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Source} & \textbf{Real} & \textbf{Fake} \\
-\midrule
-FaceForensics++ (C23)        & 200 & 550$^\dagger$ \\
-Celeb-DF v2 + YouTube-real   & 200 & 97  \\
-DFDC sample                  & 77  & 36  \\
-Custom dataset               & 400 & 194 \\
-\midrule
-\textbf{Balanced master set} & \textbf{877} & \textbf{877} \\
-\bottomrule
-\multicolumn{3}{l}{$^\dagger$Six FF++ types: Deepfakes, Face2Face,}\\
-\multicolumn{3}{l}{FaceSwap, NeuralTextures, FaceShifter, DeepFakeDetection;}\\
-\multicolumn{3}{l}{$81+87+100+91+101+90=550$ across the six types.}
-\end{tabular}
-\end{table}
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{XCEPTION_training_curves.png}
+    \par\smallskip
+    {\small (a) Training}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{XCEPTION_evaluation_plots.png}
+    \par\smallskip
+    {\small (b) Evaluation}
+\end{minipage}
+\caption{Xception training (a; hard mining from epoch 10, SWA from 15, peak AUC 0.782) and evaluation (b; AUC 0.785, AP 0.760).}
+\label{fig:xcep}
+\end{figure}
 
-Before balancing, the pool contained 877 real and 1,877 fake videos;
-1,000 fake samples were discarded to obtain the balanced master set of
-Table~\ref{tab:dataset}. The DFDC subset is drawn from the DFDC
-dataset~\cite{dolhansky2020dfdc}.
-
-\noindent\textbf{Three distinct dataset sizes.} (i) The
-\emph{master balanced dataset} contains $N{=}1{,}754$ videos
-(877 real, 877 fake). (ii) The \emph{Swin OOF dataset} contains
-$N{=}1{,}753$ videos, because one video was unavailable in the face
-cache. (iii) The \emph{final fusion cohort} contains $N{=}1{,}520$
-videos (792 real, 728 fake), i.e.\ the videos with at least two stream
-scores.
-
-\subsection{Face Preprocessing and Identity-Aware Splits}
-
-Face preprocessing is model-specific. EfficientNet-B4 uses MTCNN crops
-at $224{\times}224$ with margin 40 and no rotational alignment.
-Xception and Swin-Tiny use MTCNN with landmark-based eye alignment: the
-tilt angle $\theta = \arctan2(\Delta y, \Delta x)$ is corrected by affine
-rotation when $|\theta| > 2^\circ$. A Laplacian blur-quality check
-(threshold = 20.0) is applied, and fallback / centre-crop behaviour is
-used when the detection-quality conditions are not met. Faces are cached
-as per-video \texttt{.npy} arrays.
-
-StratifiedGroupKFold (5 folds) with identity as the group key prevents
-data leakage. Identity overlap ($\texttt{train\_ids} \cap
-\texttt{val\_ids} = \emptyset$) and video overlap were checked under the
-corresponding group-splitting procedures across 1,042 unique identities.
-
-\subsection{Common Training Details}
-
-The CNN/transformer streams use AdamW, gradient clipping
-(max\_norm=1.0), and gradient accumulation. The backbone is frozen for
-epochs 0--4 and unfrozen at epoch 5, with model-specific unfreezing
-learning-rate schedules: EfficientNet-B4 uses $\text{LR}/10$ after
-unfreezing; Xception sets the backbone to $\text{LR}/100$ at unfreezing
-and applies the executed three-epoch ramp described in Section~6;
-Swin-Tiny uses $\text{LR}/10$. SWA begins at epoch 15 (Xception, Swin) or epoch 30
-(EfficientNet). Test-time augmentation uses 5 passes for EfficientNet-B4
-and 6 passes for Xception and Swin-Tiny. Evaluation protocols are
-model-specific: the rPPG stream uses an identity-aware
-GroupShuffleSplit; EfficientNet-B4 and Xception are single-fold
-experiments (fold 0); Swin-Tiny is evaluated with the full five-fold
-out-of-fold protocol. All models were trained on Kaggle P100 GPUs.
-
-% ---------------------------------------------------------------
-\section{Ensemble Fusion}
-% ---------------------------------------------------------------
-
-\subsection{Score Imputation and Calibration}
-
-The four streams cover different video subsets (1,416; 367; 353; 1,753
-videos). After merging, 1,520 videos have at least two scores. MICE
-(IterativeImputer with BayesianRidge, 20 iterations)~\cite{vanbuuren2011mice}
-imputes 2,507 of the 6,080 ($1520\times4$) model-score cells (41.2\%).
-MICE is fit once on the complete merged 1,520-video fusion cohort before
-the downstream 10-fold OOF procedures; therefore, the reported fusion
-result is an internal OOF evaluation rather than a fully nested outer-test
-estimate.
-Beta-calibration~\cite{kull2017beta} is applied per stream using 10-fold
-OOF, where beta calibration outperformed isotonic calibration for all
-four streams:
+% =====================================================================
+\section{Stream IV: Hierarchical Swin Transformer with DCT Branch}
+Swin-Tiny~\cite{liu2021swin} (patch size 4, $M{=}7$ windows) applies attention within non-overlapping $M{\times}M$ windows, reducing complexity from $O(N^2)$ to $O(NM^2)$ for $N$ patches. Alternating shifted windows connect boundaries without extra attention cost. Patch merging yields maps at $\tfrac H4{\times}\tfrac W4$, $\tfrac H8{\times}\tfrac W8$, $\tfrac H{16}{\times}\tfrac W{16}$ and $\tfrac H{32}{\times}\tfrac W{32}$, capturing fine-to-coarse cues and border-spanning blending discontinuities. Each block computes
 \begin{equation}
-  p_{\mathrm{cal}} = \sigma\!\left(a\ln p + b\ln(1-p) + c\right)
+\text{W-MSA}(\mathbf Q,\mathbf K,\mathbf V)=\softmax\!\left(\frac{\mathbf Q\mathbf K^{\top}}{\sqrt d}+B\right)\mathbf V,
 \end{equation}
-where $a,b,c$ are fitted using OOF calibration.
-
-\subsection{Subset Selection and Ensemble Weight Optimisation}
-
-All final fusion OOF evaluations and the Optuna weight optimisation use
-the same cached 10-fold splits on the 1,520-video fusion cohort.
-
-\noindent\textbf{Subset selection.} The three-model subset was selected
-by comparing AUC-weighted closed-form fusion strategies: Strategy A
-(all four models) AUC = 0.8039; Strategy B (rPPG + EfficientNet + Swin)
-AUC = 0.8044; Strategy C (rPPG + Swin) AUC = 0.7917; Strategy D (Swin
-only) AUC = 0.7884. Strategy B was chosen.
-
-\noindent\textbf{BMA baseline.} Bayesian model averaging was evaluated
-as a closed-form baseline; its weights, computed from mean
-log-likelihood, are $(0.3103,\,0.3428,\,0.3470)$ and give AUC = 0.8034.
-
-\noindent\textbf{Final weights.} Optuna~\cite{akiba2019optuna} TPE
-single-objective optimisation (1,500 trials, 10-fold OOF, objective:
-maximise AUC) selected the final ensemble weights (AUC = 0.8081). An
-alternative NSGA-II multi-objective configuration (600 trials; objectives:
-AUC and log-loss) reached AUC = 0.8080 and was not selected. The optimal
-weights are
-$w_{\mathrm{rPPG}}{=}0.1063$, $w_{\mathrm{Eff}}{=}0.3435$,
-$w_{\mathrm{Swin}}{=}0.5501$. The weighted score is
+with a learnable relative position bias $B$. To keep padding from skewing normalisation statistics, padded frames bypass the backbone:
 \begin{equation}
-  p_w = 0.10634\,p_{\mathrm{rPPG}} + 0.34352\,p_{\mathrm{Eff}}
-  + 0.55014\,p_{\mathrm{Swin}}
+\mathbf s_t=\begin{cases}\mathrm{Swin}(\bx_t)&m_t=1,\\ \mathbf 0&m_t=0.\end{cases}
 \end{equation}
-and the final ensemble score and decision are
+The 768-d output is re-weighted by a fixed-kernel ($k{=}5$) ECA layer and projected to 384-d.
+
+\noindent\textbf{On-the-fly DCT branch.} Unlike Stream~III, this branch analyses raw pixels. A precomputed orthonormal DCT-II basis~\cite{ahmed1974dct} is applied to a bilinearly down-sampled $64{\times}64$ luminance image, with $N=64$, $\alpha_0=\sqrt{1/N}$ and $\alpha_k=\sqrt{2/N}$ for $k>0$:
+\begin{align}
+D_{k,n}&=\alpha_k\cos\!\left(\frac{\pi k(2n+1)}{2N}\right),\quad k,n\in\{0,\dots,N{-}1\},\\
+\mathbf X_{\mathrm{DCT}}&=\mathbf D\,\mathbf I_{\mathrm{gray}}\,\mathbf D^{\top},\quad I_{\mathrm{gray}}=0.299\,R+0.587\,G+0.114\,B.
+\end{align}
+Log-normalised coefficients, $\hat X_{k,l}=\log(|X_{k,l}|+10^{-6})$, are partitioned into 64 non-overlapping $8{\times}8$ blocks in the full-frame DCT coefficient array (not independent image-space block transforms). Their means $\mu_b$ and standard deviations $\sigma_b$ form
 \begin{equation}
-  \hat{p} = \sigma\!\left(\frac{\text{logit}(p_w)}{T}\right),
-  \quad T = 0.7109
+\mathbf f_{\mathrm{DCT}}=[\mu_1,\sigma_1,\mu_2,\sigma_2,\ldots,\mu_{64},\sigma_{64}]\in\R^{128},
 \end{equation}
+A two-layer MLP encodes this as a 192-d frequency representation. Packed sequences keep padding out of the BiLSTM (input 384, hidden 256, 2 layers; Xavier-uniform input, orthogonal recurrent weights, forget-gate bias 1.0). For sample $b$ in batch $B$, the valid length and 704-d fused representation are
+\begin{align}
+\ell_b&=\sum_{t=1}^{T}m_{b,t},\qquad\forall b\in[B],\\
+\bz&=[\bz_{\mathrm{temporal}}^{512};\,\bz_{\mathrm{freq}}^{192}],
+\end{align}
+followed by 4-head attention as in Stream~II and an MLP head (704$\to$192$\to$96$\to$1). The training sequence length follows a progressive curriculum (validation always uses 16 frames):
 \begin{equation}
-  \hat{y} = \begin{cases} 1, & \hat{p} \ge 0.4377 \\
-  0, & \hat{p} < 0.4377 \end{cases}
+T_{\mathrm{train}}(e)=\begin{cases}5&e\in[0,4],\\10&e\in[5,14],\\16&e\ge15.\end{cases}
 \end{equation}
-The Youden-J optimal decision threshold is 0.4377 (the F2-optimal
-threshold is 0.1600).
+All five folds are trained and their out-of-fold (OOF) predictions pooled for an unbiased evaluation: per-fold best AUCs are 0.762, 0.836, 0.802, 0.781 and 0.776; mean $0.791\pm0.026$; pooled OOF AUC 0.789 (95\% CI 0.768--0.810; Fig.~\ref{fig:swin}).
 
-% ---------------------------------------------------------------
-\section{Results}
-% ---------------------------------------------------------------
-
-\subsection{Individual Model Performance}
-
-Table~\ref{tab:individual} separates the standalone evaluation of each
-model from its evaluation on the 1,520-video fusion cohort, so that the
-two protocols are not mixed.
-
-\begin{table}[!htbp]
+\begin{figure}[!t]
 \centering
-\caption{Model Performance: Standalone vs.\ Fusion-Cohort Evaluation}
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{SWIN_training_curves.png}
+    \par\smallskip
+    {\small (a) Training}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.495\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{SWIN_evaluation_plots.png}
+    \par\smallskip
+    {\small (b) Evaluation}
+\end{minipage}
+\caption{Swin Transformer training (a; 5$\to$10$\to$16-frame curriculum) and OOF evaluation (b; 1,753 videos, AUC 0.789).}
+\label{fig:swin}
+\end{figure}
+
+% =====================================================================
+\section{Calibrated Late-Fusion Ensemble}
+The reported stream coverages are 1,416, 367, 353 and 1,753 videos; the fusion cohort contains 1,520 videos with at least two observed scores. A Bayesian-ridge iterative imputer (20 iterations) completes the partially observed score matrix; the total number of missing cells is not reported because it must be recomputed from the deduplicated score join. The broader MICE framework is described in~\cite{vanbuuren2011mice}; the current description does not establish that multiple completed datasets were generated. Each stream is beta-calibrated~\cite{kull2017beta} using 10-fold out-of-fold (OOF) predictions, with $\alpha_{\mathrm{cal}},\beta_{\mathrm{cal}}\ge0$ and $c\in\R$:
+\begin{equation}
+p_{\mathrm{cal}}=\frac{e^{c}\,p^{\alpha_{\mathrm{cal}}}}{e^{c}\,p^{\alpha_{\mathrm{cal}}}+(1-p)^{\beta_{\mathrm{cal}}}}.
+\end{equation}
+We compare five strategies on the aligned $N_v\times4$ score matrix: (1)~simple average $P_{\mathrm{final}}=\tfrac14\sum_{i=1}^{4}P_i$; (2)~AUC-weighted average $P_{\mathrm{final}}=\sum_{i=1}^{4}w_iP_i$, where $w_i=\mathrm{AUC}_i/\sum_j\mathrm{AUC}_j$; (3)~rank-based averaging, $r_i(k)=\mathrm{rank}(P_i(k))/N_v$ and $P_{\mathrm{final}}=\tfrac14\sum_i r_i$, which is invariant to calibration differences; (4)~a logistic-regression meta-learner on $[P_{\mathrm{rPPG}},P_{\mathrm{Eff}},P_{\mathrm{Xcep}},P_{\mathrm{Swin}}]$ with 5-fold OOF prediction; and (5)~Optuna~\cite{akiba2019optuna} with the NSGA-II sampler~\cite{deb2002nsga2}, using 10-fold OOF predictions to maximise AUC and F1 jointly. Normalized-AUC weights provide a reference; this baseline is not Bayesian model averaging. Let $\Delta^{3}=\{\bw\in\R^{4}_{\ge0}:\sum_iw_i=1\}$ be the feasible weight simplex:
+\begin{equation}
+\bw^{*}\in\operatorname{ParetoArgmax}_{\bw\in\Delta^{3}}\left(\mathrm{AUC}(P_{\bw}),F_1(P_{\bw})\right),\quad P_{\bw}=\sum_iw_iP_i.
+\end{equation}
+The search selects a 3-model subset (rPPG, EfficientNet, Swin-Tiny) with $w_{\mathrm{rPPG}}{=}0.1063$, $w_{\mathrm{Eff}}{=}0.3435$, $w_{\mathrm{Swin}}{=}0.5501$, excluding Xception (i.e., $w_{\mathrm{Xcep}}=0$). The displayed weights are rounded. With learned temperature $\Tcal{=}0.711$~\cite{guo2017calibration}, the calibrated ensemble score is
+\begin{equation}
+\hat p=\sigm\!\left(\frac{\logit(\bw^{\top}\bp)}{\Tcal}\right).
+\end{equation}
+Because $x\mapsto\sigm(\logit(x)/\Tcal)$ is strictly increasing on $(0,1)$, temperature scaling changes calibration but not ranking-based AUC; the weighting determines the ranking gain. The operating threshold is the Youden-J optimum on validation data, $\tau^{*}=0.4377$ (the F1-optimal variant is $\tau^{*}=\argmax_{\tau\in[0.05,0.95]}F_1(\tau)$). Split-conformal prediction~\cite{vovk2005conformal} uses $s(x,y)=1-\hat p_y(x)$ and $\mathcal C(x)=\{y:s(x,y)\le\hat q\}$, where $\hat q$ is the $\lceil(n+1)(1-\alpha)\rceil/n$ quantile of calibration scores; under exchangeability, $\Pr\{y\in\mathcal C(x)\}\ge1-\alpha$.
+
+% =====================================================================
+\section{Experiments and Results}
+\noindent\textbf{Protocol.} All streams use Eq.~\eqref{eq:leak}, seed 42 and stratified bootstrap 95\% CIs ($n{=}2000$). AUC is primary; accuracy, F1, precision, recall and EER are reported where available. Stream-level thresholds are 0.5 and the ensemble threshold is $\tau^{*}$. Deep streams use AdamW~\cite{loshchilov2019adamw} (backbone learning rate one tenth of base), gradient clipping (max-norm 1.0), backbone freezing for epochs 0--4 and a 3-epoch unfreezing ramp. Learning rate/weight decay are $5{\times}10^{-5}/5{\times}10^{-4}$ (EfficientNet) and $10^{-4}/10^{-2}$ (Xception); label smoothing is 0.1/0.05/0.08, SWA starts at epochs 30/15/15, and TTA uses 5/6/6 passes for Streams~II--IV (Swin: focal $\alpha{=}0.5$, MixUp $\alpha{=}0.4$).
+
+\begin{table}[!t]
+\centering
+\caption{Reported metrics under distinct protocols: I, 80/20 group split; II--III, fold-0 validation; IV, pooled OOF (1,753 videos); ensemble, aligned cohort ($n{=}1520$). Cross-row comparisons are descriptive, not a common-test-set comparison.}
 \label{tab:individual}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lcccc@{}}
+\small
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-\textbf{Model} & \textbf{Standalone AUC} & \textbf{Fusion-cohort AUC}
-& \textbf{Acc} & \textbf{F1} \\
+\textbf{Model} & \textbf{AUC} & \textbf{Acc} & \textbf{F1} & \textbf{Prec} & \textbf{EER}\\
 \midrule
-rPPG (ML Stacking)         & 0.628  & 0.6283 & 0.5993$^\dagger$ & 0.6182$^\dagger$ \\
-EfficientNet-B4 + BiLSTM   & 0.7390 & 0.7784 & 0.7283$^\dagger$ & 0.7344$^\dagger$ \\
-Xception + ECA + Par.\ branch & 0.7848 & 0.7601 & --- & --- \\
-Swin-Tiny + DCT (OOF)      & 0.7891 & 0.7884 & 0.7237$^\dagger$ & 0.7276$^\dagger$ \\
+I\ \ rPPG (ML stacking) & 0.628 & 61.9\% & 0.618 & 0.569 & ---\\
+II\ \ EfficientNet-B4 & 0.739 & 69.2\% & 0.676 & 0.652 & 0.302\\
+III\ \ Xception + ECA + Freq. & 0.785 & 71.4\% & 0.689 & 0.709 & 0.269\\
+IV\ \ Swin-Tiny + DCT (OOF) & 0.789 & 71.8\% & 0.721 & 0.714 & 0.284\\
 \midrule
-\textbf{Final ensemble}    & --- & \textbf{0.8081} & \textbf{0.7289} &
-\textbf{0.7335} \\
+\textbf{NeuroPulse ensemble} & \textbf{0.808} & \textbf{72.9\%} & \textbf{0.734} & \textbf{0.693} & ---\\
 \bottomrule
-\multicolumn{5}{l}{$^\dagger$Fusion-cohort Accuracy/F1 values are computed at threshold 0.5;}\\
-\multicolumn{5}{l}{final-ensemble metrics use the Youden threshold 0.4377.}
-\end{tabular}}
-\end{table}
-
-\subsection{Ensemble Ablation}
-
-\begin{table}[!htbp]
-\centering
-\caption{Ensemble Ablation: Merge Strategy Comparison (F1 at the stated
-threshold)}
-\label{tab:ablation}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Strategy} & \textbf{AUC} & \textbf{F1} & \textbf{Threshold} \\
-\midrule
-Swin only (baseline)                & 0.7884 & 0.7276 & 0.5 \\
-Simple average (3-model)            & 0.8022 & 0.7151 & 0.5 \\
-AUC-weighted average                & 0.8044 & 0.7127 & 0.5 \\
-Logit-space average                 & 0.8016 & 0.7164 & 0.5 \\
-BMA weights                         & 0.8034 & ---    & 0.5 \\
-Meta-LR (OOF)                       & 0.8038 & 0.7167 & 0.5 \\
-Optuna TPE + temperature scaling, threshold 0.5 & 0.8081 & 0.7086 & 0.5 \\
-\textbf{Optuna TPE + temperature scaling, Youden threshold} &
-\textbf{0.8081} & \textbf{0.7335} & \textbf{0.4377 (Youden)} \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\subsection{Confidence Intervals and Statistical Tests}
-
-\begin{table}[!htbp]
-\centering
-\caption{Final Ensemble 95\% Bootstrap CI ($n{=}2000$, stratified;
-threshold 0.4377)}
-\label{tab:ci}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Metric} & \textbf{Value} & \textbf{95\% CI} \\
-\midrule
-AUC-ROC   & 0.8081 & [0.7856, 0.8293] \\
-Accuracy  & 0.7289 & [0.7059, 0.7513] \\
-F1-Score  & 0.7334$^\ddagger$ & [0.7104, 0.7553] \\
-Precision & 0.6932 & [0.6703, 0.7181] \\
-Recall    & 0.7788 & [0.7459, 0.8091] \\
-\bottomrule
-\multicolumn{3}{l}{$^\ddagger$Bootstrap mean; the point-estimate F1 is 0.7335.}
 \end{tabular}
 \end{table}
 
-An AUC comparison of the ensemble (AUC=0.8081) against Swin-Tiny
-(AUC=0.7884), computed with a DeLong-style procedure as implemented in
-our evaluation code, gives $z{=}1.235$, $p{=}0.2168$; this should be
-read as an implementation-specific comparison rather than a conventional
-paired DeLong test. McNemar's test (with continuity correction):
-$b{=}47$, $c{=}39$, $\chi^2{=}0.570$, $p{=}0.4504$. While the ensemble
-consistently outperforms individual models, differences are not
-statistically significant at $\alpha{=}0.05$ for $n{=}1520$, suggesting
-a larger evaluation set is needed. Conformal
-prediction~\cite{vovk2005conformal} was calibrated
-using one cached validation fold (approximately 152 samples), giving an
-empirical coverage ($\alpha{=}0.1$) of 0.9007; 613 of 1,520 samples
-(40.3\%) fall
-in the uncertain region, reflecting the inherent difficulty of
-compressed video deepfake detection.
+\begin{table}[!t]
+\centering
+\caption{Fusion ablation on the aligned set.}
+\label{tab:ablation}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Strategy} & \textbf{AUC} & \textbf{F1}\\
+\midrule
+Swin only (baseline) & 0.788 & 0.728\\
+Simple average / logit-space average & 0.802 & 0.715 / 0.716\\
+AUC-weighted / normalized-AUC weights & 0.804 / 0.803 & 0.713 / 0.714\\
+Rank-based & 0.787 & ---\\
+Meta-learner LR (OOF) & 0.804 & 0.717\\
+\textbf{Optuna multi-objective + $\Tcal{=}0.711$} & \textbf{0.808} & \textbf{0.734}\\
+\bottomrule
+\end{tabular}
+\end{table}
 
-% ---------------------------------------------------------------
-\section{Discussion}
-% ---------------------------------------------------------------
+\noindent\textbf{Results.} Aligned-set AUC rises from 0.788 (Swin-only) to 0.808 (gain 0.020; Table~\ref{tab:ablation}). Bootstrap 95\% CIs are AUC 0.808 [0.786, 0.829], accuracy 72.9\% [70.6, 75.1], F1 0.734 [0.710, 0.755], precision 0.693 [0.670, 0.718] and recall 0.779 [0.746, 0.809]. The selected fusion has the highest listed AUC/F1 pair in the reported aligned cohort; Table~\ref{tab:individual} uses different fold/group/OOF protocols and is not a uniform test-set comparison. The gain is nonsignificant (DeLong $z{=}1.235$, $p{=}0.217$~\cite{delong1988}; McNemar $b{=}47$, $c{=}39$, $\chi^2{=}0.570$, $p{=}0.450$~\cite{mcnemar1947}; $n{=}1520$, $\alpha{=}0.05$). At $\alpha{=}0.1$, conformal coverage is 90.07\% with 40.3\% uncertain samples.
 
-\noindent\textbf{Model diversity matters.} The pairwise correlation
-between rPPG and Swin-Tiny predictions ($r{=}0.232$) is substantially
-lower than EfficientNet-Swin ($r{=}0.706$), confirming that the
-physiological stream provides complementary signal. Despite its lower
-individual AUC, rPPG's low correlation contributes measurably to
-ensemble diversity.
+\section{Discussion and Limitations}
+Reported score correlations are $r{=}0.232$ (rPPG/Swin-Tiny), $r{=}0.462$ (rPPG/EfficientNet) and $r{=}0.706$ (EfficientNet/Swin). They are consistent with partial complementarity but cannot establish statistical independence; sample counts, uncertainty intervals and the effect of imputed scores are not reported. The reported Xception AUCs are 0.958 (DeepFakeDetection), 0.897 (Deepfakes), 0.685 (FaceSwap) and 0.675 (FaceShifter); subgroup sample sizes and uncertainty are unavailable.
 
-\noindent\textbf{Identity leakage is critical.} Random splits that allow
-the same identity to appear in both training and validation can produce
-overly optimistic estimates in face-centric datasets. Our experiments
-therefore use identity-aware grouping for the corresponding model
-streams, and identity and video overlap were checked under the
-corresponding group-splitting procedures across 1,042 unique identities.
+\noindent\textbf{Limitations.} Four-stream inference is costly. Low-amplitude (0.1--1\%) rPPG can degrade under strong H.264/H.265 compression, occlusion, extreme pose or fewer than 30 clear frames; constant single-segment Welch coherence (1.0) is excluded, leaving fewer than 117 effective features. The effective rPPG sampling rate/duration, provenance of the 1,416 rPPG scores relative to the 80/20/five-fold split, degenerate-CHROM safeguards, probability clipping for beta/logit transforms, Pareto-point selection rule and conformal calibration/test split are undocumented. Physiology-conditioned diffusion may mimic pulse cues. EfficientNet and Xception use single-fold estimates; subgroup counts and uncertainty are absent. The aligned-set fusion result may be optimistic without nested or untouched-test validation. The 1,754-video corpus versus 1,753-video Swin coverage and the missing-score total require reconciliation; per-dataset/class counts, DFDC sampling, custom-corpus provenance/consent and cross-dataset identity resolution are unreported. External generalization and audio remain untested.
 
-\noindent\textbf{Complementary learned features.} Xception's
-per-manipulation breakdown shows high AUC for DeepFakeDetection (0.958)
-and Deepfakes (0.897), but lower AUC for FaceSwap (0.685) and
-FaceShifter (0.675). The parallel learned feature branch provides a
-complementary representation alongside the ECA-weighted temporal
-features; however, no dedicated ablation isolates its effect on
-compressed-video detection, and the subgroup AUCs are based on small
-samples and are descriptive only.
+\section{Conclusion and Future Work}
+The reported three-stream fusion reaches AUC 0.8081 (95\% CI: 0.7856--0.8293) on the aligned cohort, with a 0.020 gain over Swin-only that is not statistically significant (DeLong $p{=}0.217$). The correlations suggest possible complementarity, not statistical independence. Because the evaluation cohorts differ and the complete fusion-selection pipeline has not been independently validated, the result should be treated as exploratory. Future work includes real-time distillation~\cite{hinton2015distillation}, audio-visual fusion, end-to-end rPPG and nested multi-seed cross-dataset tests on diffusion videos.
 
-\noindent\textbf{Limitations.} The rPPG stream requires sufficient valid
-sampled frames to construct approximately two seconds of signal and is
-sensitive to heavy occlusion, failed face detection, and extreme pose.
-Cross-dataset generalisation (e.g., DF40, WildDeepfake) remains
-unexplored. The final ensemble evaluation is an OOF evaluation on the
-merged cohort but does not constitute a strictly nested outer test of
-every model-selection stage. Training was constrained to under 12 hours
-per model on Kaggle P100 GPUs; the effect of longer training schedules
-was not evaluated.
-
-% ---------------------------------------------------------------
-\section{Conclusion}
-% ---------------------------------------------------------------
-
-We have presented NeuroPulse, a multi-modal deepfake detection
-framework fusing rPPG physiological signals, spatio-temporal CNN
-features, frequency-domain cues, and hierarchical vision transformer
-representations. The framework combines heterogeneous physiological,
-CNN-based and transformer-based detectors through model-specific
-identity-aware training and evaluation protocols and late fusion. With
-MICE imputation, beta-calibration, and Optuna ensemble optimisation, the
-system achieves an AUC-ROC of 0.8081 on the 1,520-video fusion cohort
-under the implemented 10-fold out-of-fold evaluation. Future
-work will incorporate cross-dataset evaluation, DF40 generalisation
-testing, and end-to-end rPPG CNN encoding.
-
-% ---------------------------------------------------------------
-\begin{thebibliography}{00}
-
-\bibitem{rossler2019ff}
-Rossler, A., et al.: FaceForensics++: Learning to detect manipulated
-facial images. In: Proc. IEEE/CVF ICCV, pp. 1--11 (2019)
-
-\bibitem{li2020celeb}
-Li, Y., et al.: Celeb-DF: A large-scale challenging dataset for deepfake
-video forensics. In: Proc. IEEE/CVF CVPR, pp. 3207--3216 (2020)
-
-\bibitem{ciftci2020fakecatcher}
-Ciftci, U.A., Demir, I., Yin, L.: FakeCatcher: Detection of synthetic
-portrait videos using biological signals. IEEE Trans. PAMI
-\textbf{44}(9), 4961--4971 (2022)
-
-\bibitem{chollet2017xception}
-Chollet, F.: Xception: Deep learning with depthwise separable
-convolutions. In: Proc. IEEE/CVF CVPR, pp. 1251--1258 (2017)
-
-\bibitem{tan2019efficientnet}
-Tan, M., Le, Q.: EfficientNet: Rethinking model scaling for CNNs.
-In: Proc. ICML, pp. 6105--6114 (2019)
-
-\bibitem{liu2021swin}
-Liu, Z., et al.: Swin Transformer: Hierarchical vision transformer using
-shifted windows. In: Proc. IEEE/CVF ICCV, pp. 10012--10022 (2021)
-
-\bibitem{wang2020eca}
-Wang, Q., et al.: ECA-Net: Efficient channel attention for deep CNNs.
-In: Proc. IEEE/CVF CVPR, pp. 11534--11542 (2020)
-
-\bibitem{lin2017focal}
-Lin, T.Y., et al.: Focal loss for dense object detection.
-In: Proc. IEEE/CVF ICCV, pp. 2980--2988 (2017)
-
-\bibitem{izmailov2018swa}
-Izmailov, P., et al.: Averaging weights leads to wider optima and better
-generalization. In: Proc. UAI, pp. 876--885 (2018)
-
-\bibitem{dezwart2013chrom}
-de Haan, G., Jeanne, V.: Robust pulse rate from chrominance-based rPPG.
-IEEE Trans. Biomed. Eng. \textbf{60}(10), 2878--2886 (2013)
-
-\bibitem{zhang2018mixup}
-Zhang, H., et al.: MixUp: Beyond empirical risk minimization.
-In: Proc. ICLR (2018)
-
-\bibitem{yun2019cutmix}
-Yun, S., et al.: CutMix: Training strategy that makes use of sample
-pairing. In: Proc. IEEE/CVF ICCV, pp. 6023--6032 (2019)
-
-\bibitem{afchar2018mesonet}
-Afchar, D., et al.: MesoNet: A compact facial video forgery detection
-network. In: Proc. IEEE WIFS, pp. 1--7 (2018)
-
-\bibitem{frank2020leveraging}
-Frank, J., et al.: Leveraging frequency analysis for deep fake image
-recognition. In: Proc. ICML, pp. 3247--3258 (2020)
-
-\bibitem{welch1967}
-Welch, P.D.: The use of fast Fourier transform for estimation of power
-spectra. IEEE Trans. Audio Electroacoust. \textbf{15}(2), 70--73 (1967)
-
-\bibitem{qi2020deeprhythm}
-Qi, H., et al.: DeepRhythm: Exposing deepfakes with attentional visual
-heartbeat rhythms. In: Proc. ACM MM, pp. 4318--4327 (2020)
-
-\bibitem{akiba2019optuna}
-Akiba, T., Sano, S., Yanase, T., Ohta, T., Koyama, M.: Optuna: A
-next-generation hyperparameter optimization framework. In: Proc. ACM
-SIGKDD, pp. 2623--2631 (2019)
-
-\bibitem{vanbuuren2011mice}
-van Buuren, S., Groothuis-Oudshoorn, K.: mice: Multivariate imputation
-by chained equations in R. J. Stat. Softw. \textbf{45}(3), 1--67 (2011)
-
-\bibitem{kull2017beta}
-Kull, M., Silva Filho, T.M., Flach, P.: Beta calibration: A
-well-founded and easily implemented improvement on logistic calibration
-for binary classifiers. In: Proc. AISTATS, PMLR \textbf{54}, pp.
-623--631 (2017)
-
-\bibitem{selvaraju2017gradcam}
-Selvaraju, R.R., et al.: Grad-CAM: Visual explanations from deep
-networks via gradient-based localization. In: Proc. IEEE ICCV, pp.
-618--626 (2017)
-
-\bibitem{zhang2016mtcnn}
-Zhang, K., Zhang, Z., Li, Z., Qiao, Y.: Joint face detection and
-alignment using multitask cascaded convolutional networks. IEEE Signal
-Process. Lett. \textbf{23}(10), 1499--1503 (2016)
-
-\bibitem{lugaresi2019mediapipe}
-Lugaresi, C., et al.: MediaPipe: A framework for building perception
-pipelines. arXiv:1906.08172 (2019)
-
-\bibitem{vaswani2017attention}
-Vaswani, A., et al.: Attention is all you need. In: Advances in Neural
-Information Processing Systems (NeurIPS), vol. 30, pp. 5998--6008 (2017)
-
-\bibitem{vovk2005conformal}
-Vovk, V., Gammerman, A., Shafer, G.: Algorithmic Learning in a Random
-World. Springer, New York (2005)
-
-\bibitem{dolhansky2020dfdc}
-Dolhansky, B., et al.: The DeepFake Detection Challenge (DFDC) dataset.
-arXiv:2006.07397 (2020)
-
+% AUTHOR ACTION REQUIRED BEFORE FINAL SUBMISSION:
+% Confirm the competing-interests declaration and any venue-specific AI-use disclosure with all authors.
+% Do not state that there are no competing interests unless every author confirms it.
+% =====================================================================
+\begin{thebibliography}{99}
+\bibitem{goodfellow2014gan} Goodfellow, I., et al.: Generative adversarial nets. NeurIPS 27 (2014)
+\bibitem{ho2020ddpm} Ho, J., Jain, A., Abbeel, P.: Denoising diffusion probabilistic models. NeurIPS 33, 6840--6851 (2020)
+\bibitem{rossler2019ff} R\"ossler, A., et al.: FaceForensics++: Learning to detect manipulated facial images. ICCV, 1--11 (2019)
+\bibitem{li2020celebdf} Li, Y., et al.: Celeb-DF: A large-scale challenging dataset for DeepFake forensics. CVPR, 3207--3216 (2020)
+\bibitem{ciftci2020fakecatcher} Ciftci, U.A., Demir, I., Yin, L.: FakeCatcher: Detection of synthetic portrait videos using biological signals. IEEE Trans. Pattern Anal. Mach. Intell. \textbf{44}(9), 4961--4971 (2022)
+\bibitem{chollet2017xception} Chollet, F.: Xception: Deep learning with depthwise separable convolutions. CVPR, 1251--1258 (2017)
+\bibitem{frank2020leveraging} Frank, J., et al.: Leveraging frequency analysis for deep fake image recognition. ICML, 3247--3258 (2020)
+\bibitem{tan2019efficientnet} Tan, M., Le, Q.V.: EfficientNet: Rethinking model scaling for convolutional neural networks. ICML, 6105--6114 (2019)
+\bibitem{qi2020deeprhythm} Qi, H., et al.: DeepRhythm: Exposing deepfakes with attentional visual heartbeat rhythms. ACM Multimedia, 4318--4327 (2020)
+\bibitem{dehaan2013chrom} de Haan, G., Jeanne, V.: Robust pulse rate from chrominance-based rPPG. IEEE Trans. Biomed. Eng. \textbf{60}(10), 2878--2886 (2013)
+\bibitem{wang2017pos} Wang, W., et al.: Algorithmic principles of remote PPG. IEEE Trans. Biomed. Eng. \textbf{64}(7), 1479--1491 (2017)
+\bibitem{vaswani2017attention} Vaswani, A., et al.: Attention is all you need. NeurIPS 30, 5998--6008 (2017)
+\bibitem{liu2021swin} Liu, Z., et al.: Swin Transformer: Hierarchical vision transformer using shifted windows. ICCV, 10012--10022 (2021)
+\bibitem{wang2020eca} Wang, Q., et al.: ECA-Net: Efficient channel attention for deep convolutional neural networks. CVPR, 11534--11542 (2020)
+\bibitem{guo2017calibration} Guo, C., et al.: On calibration of modern neural networks. ICML, 1321--1330 (2017)
+\bibitem{kull2017beta} Kull, M., Silva Filho, T.M., Flach, P.: Beta calibration: A well-founded and easily implemented improvement on logistic calibration for binary classifiers. AISTATS, 623--631 (2017)
+\bibitem{vovk2005conformal} Vovk, V., Gammerman, A., Shafer, G.: Algorithmic Learning in a Random World. Springer, New York (2005)
+\bibitem{dolhansky2020dfdc} Dolhansky, B., et al.: The DeepFake Detection Challenge (DFDC) dataset. arXiv:2006.07397 (2020)
+\bibitem{kartynnik2019facemesh} Kartynnik, Y., et al.: Real-time facial surface geometry from monocular video on mobile GPUs. arXiv:1907.06724 (2019)
+\bibitem{zhang2016mtcnn} Zhang, K., et al.: Joint face detection and alignment using multitask cascaded convolutional networks. IEEE Signal Process. Lett. \textbf{23}(10), 1499--1503 (2016)
+\bibitem{lachaux1999plv} Lachaux, J.-P., et al.: Measuring phase synchrony in brain signals. Hum. Brain Mapp. \textbf{8}(4), 194--208 (1999)
+\bibitem{butterworth1930} Butterworth, S.: On the theory of filter amplifiers. Wireless Eng. \textbf{7}, 536--541 (1930)
+\bibitem{welch1967} Welch, P.D.: The use of fast Fourier transform for the estimation of power spectra. IEEE Trans. Audio Electroacoust. \textbf{15}(2), 70--73 (1967)
+\bibitem{chen2016xgboost} Chen, T., Guestrin, C.: XGBoost: A scalable tree boosting system. ACM SIGKDD, 785--794 (2016)
+\bibitem{ke2017lightgbm} Ke, G., et al.: LightGBM: A highly efficient gradient boosting decision tree. NeurIPS 30, 3146--3154 (2017)
+\bibitem{wolpert1992stacking} Wolpert, D.H.: Stacked generalization. Neural Netw. \textbf{5}(2), 241--259 (1992)
+\bibitem{hochreiter1997lstm} Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Comput. \textbf{9}(8), 1735--1780 (1997)
+\bibitem{lin2017focal} Lin, T.-Y., et al.: Focal loss for dense object detection. ICCV, 2980--2988 (2017)
+\bibitem{zhang2018mixup} Zhang, H., et al.: mixup: Beyond empirical risk minimization. ICLR (2018)
+\bibitem{izmailov2018swa} Izmailov, P., et al.: Averaging weights leads to wider optima and better generalization. UAI, 876--885 (2018)
+\bibitem{selvaraju2017gradcam} Selvaraju, R.R., et al.: Grad-CAM: Visual explanations from deep networks via gradient-based localization. ICCV, 618--626 (2017)
+\bibitem{shrivastava2016ohem} Shrivastava, A., Gupta, A., Girshick, R.: Training region-based object detectors with online hard example mining. CVPR, 761--769 (2016)
+\bibitem{yun2019cutmix} Yun, S., et al.: CutMix: Regularization strategy to train strong classifiers with localizable features. ICCV, 6023--6032 (2019)
+\bibitem{ahmed1974dct} Ahmed, N., Natarajan, T., Rao, K.R.: Discrete cosine transform. IEEE Trans. Comput. \textbf{C-23}(1), 90--93 (1974)
+\bibitem{vanbuuren2011mice} van Buuren, S., Groothuis-Oudshoorn, K.: mice: Multivariate imputation by chained equations in R. J. Stat. Softw. \textbf{45}(3), 1--67 (2011)
+\bibitem{akiba2019optuna} Akiba, T., et al.: Optuna: A next-generation hyperparameter optimization framework. ACM SIGKDD, 2623--2631 (2019)
+\bibitem{deb2002nsga2} Deb, K., et al.: A fast and elitist multiobjective genetic algorithm: NSGA-II. IEEE Trans. Evol. Comput. \textbf{6}(2), 182--197 (2002)
+\bibitem{loshchilov2019adamw} Loshchilov, I., Hutter, F.: Decoupled weight decay regularization. ICLR (2019)
+\bibitem{delong1988} DeLong, E.R., DeLong, D.M., Clarke-Pearson, D.L.: Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach. Biometrics \textbf{44}(3), 837--845 (1988)
+\bibitem{mcnemar1947} McNemar, Q.: Note on the sampling error of the difference between correlated proportions or percentages. Psychometrika \textbf{12}(2), 153--157 (1947)
+\bibitem{hinton2015distillation} Hinton, G., Vinyals, O., Dean, J.: Distilling the knowledge in a neural network. arXiv:1503.02531 (2015)
 \end{thebibliography}
 
 \end{document}
