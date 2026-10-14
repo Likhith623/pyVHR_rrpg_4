@@ -1,427 +1,1172 @@
+% LLNCS DOCUMENT CLASS -- version 2.26 (25-Feb-2025)
+% Springer Verlag LaTeX2e support for Lecture Notes in Computer Science
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesClass{llncs}[2025/02/25 v2.26
+^^J LaTeX document class for Lecture Notes in Computer Science]
+% Options
+\let\if@envcntreset\iffalse
+\DeclareOption{envcountreset}{\let\if@envcntreset\iftrue}
+\DeclareOption{citeauthoryear}{\let\citeauthoryear=Y}
+\DeclareOption{oribibl}{\let\oribibl=Y}
+\let\if@custvec\iftrue
+\DeclareOption{orivec}{\let\if@custvec\iffalse}
+\let\if@envcntsame\iffalse
+\DeclareOption{envcountsame}{\let\if@envcntsame\iftrue}
+\let\if@envcntsect\iffalse
+\DeclareOption{envcountsect}{\let\if@envcntsect\iftrue}
+\let\if@runhead\iffalse
+\DeclareOption{runningheads}{\let\if@runhead\iftrue}
 
-% =====================================================================
-%  NeuroPulse -- Camera-Ready Copy (Springer LNCS/LNNS / llncs)
-%  Compile: pdflatex main.tex  (run twice).  No BibTeX required.
-%  Required files in the same folder (llncs.cls + the 7 figures):
-%    EFFICIENTNET_evaluation_plots.png   EFFICIENTNET_training_curves.png
-%    EFFICIENTNET_gradcam_gallery.png    XCEPTION_evaluation_plots.png
-%    XCEPTION_training_curves.png        SWIN_evaluation_plots.png
-%    SWIN_training_curves.png
-% =====================================================================
-\documentclass[runningheads]{llncs}
+\let\if@openright\iftrue
+\let\if@openbib\iffalse
+\DeclareOption{openbib}{\let\if@openbib\iftrue}
 
-\usepackage[T1]{fontenc}
-\usepackage{amsmath}
-\usepackage{newtxtext}
-\usepackage[varvw]{newtxmath}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{microtype}
-\usepackage{tikz}
-\usepackage{url}
-% Accessibility descriptions are part of the current Springer sample.
-% Compatibility fallback for an LLNCS class that does not define the macro.
-\providecommand{\Description}[1]{}
-% Use LLNCS default equation spacing; no manual spacing or margin overrides.
+% languages
+\let\switcht@@therlang\relax
+\def\ds@deutsch{\def\switcht@@therlang{\switcht@deutsch}}
+\def\ds@francais{\def\switcht@@therlang{\switcht@francais}}
 
-% ---- notation shortcuts ------------------------------------------------
-\newcommand{\R}{\mathbb{R}}
-\newcommand{\bx}{\mathbf{x}}
-\newcommand{\bz}{\mathbf{z}}
-\newcommand{\bh}{\mathbf{h}}
-\newcommand{\bw}{\mathbf{w}}
-\newcommand{\bp}{\mathbf{p}}
-\newcommand{\bF}{\mathbf{F}}
-\newcommand{\Tcal}{T_{\mathrm{cal}}}
-\DeclareMathOperator{\sigm}{sigmoid}
-\DeclareMathOperator{\logit}{logit}
-\DeclareMathOperator{\clip}{clip}
-\DeclareMathOperator{\softmax}{softmax}
-\DeclareMathOperator{\Var}{Var}
-\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
 
-\begin{document}
+\ProcessOptions
 
-\title{NeuroPulse: Orthogonal Four-Stream Deepfake Video Detection via Haemodynamic Signal Analysis, Depthwise-Separable Spatio-Temporal Dual-Branch Attention, and Hierarchical Shifted-Window Transformer Late-Fusion Ensemble}
-\titlerunning{NeuroPulse: Four-Stream Deepfake Detection}
+\LoadClass[twoside]{article}
+\RequirePackage{multicol}
+\RequirePackage{aliascnt}
 
-\author{Vasireddy Likhith Chowdary\inst{1}\orcidID{0009-0000-5291-8452}\thanks{Corresponding author.} \and
-        Raushan Kumar Singh\inst{1} \and
-        G. Lalith Sathvik\inst{1} \and
-        T. Dheeraj\inst{1} \and
-        V. Siva Nikshya\inst{1} \and
-        K. Tejaswini\inst{1}}
-\authorrunning{V. L. Chowdary et al.}
-
-\institute{Department of CSE, SRM University-AP, Amaravati, India\\
-\email{\{likhithchowdary\_vasireddy, raushankumar.s, lalithsathvik\_gaddam, Dheeraj\_thirunala, sivanikshya\_vishnumolakala, tejaswi\_katta\}@srmap.edu.in}}
-
-\maketitle
-
-\begin{abstract}
-Single-cue deepfake-video detectors may fail when synthesis weakens spatial artefacts or temporal consistency; identity overlap may also inflate estimates. NeuroPulse evaluates four architecturally distinct forensic streams; ``orthogonal'' refers to mechanisms, not mathematical orthogonality or statistical independence. Stream~I extracts a 117-dimensional, nine-region CHROM-rPPG descriptor for stacking. Stream~II combines EfficientNet-B4, bidirectional LSTM and multi-head attention. Stream~III uses depthwise-separable Xception, Efficient Channel Attention, an auxiliary learned-feature branch and hard-example mining. Stream~IV combines Swin-Tiny, analytic block-DCT features and a packed-sequence BiLSTM. Late fusion evaluates iterative imputation, beta calibration, weighting, temperature scaling and split-conformal prediction. In a 1,754-video corpus with 1,042 recorded identity labels, the selected fusion uses rPPG, EfficientNet and Swin-Tiny, excluding Xception. It reaches AUC 0.8081 (95\% CI: 0.7856--0.8293), 0.020 above Swin-only on the aligned set; the difference is nonsignificant (DeLong's test, $p{=}0.217$). The rPPG--Swin score correlation ($r{=}0.232$) suggests partial complementarity, not independence. Results remain exploratory because score coverage needs reconciliation and the complete selection pipeline lacks independent validation.
-\keywords{Deepfake detection \and Remote photoplethysmography \and Swin Transformer \and Efficient Channel Attention \and DCT frequency analysis \and Late-fusion ensemble}
-\end{abstract}
-
-% =====================================================================
-\section{Introduction}
-GANs~\cite{goodfellow2014gan}, face swaps and diffusion models~\cite{ho2020ddpm} enable high-fidelity portrait videos and raise risks of disinformation, identity fraud and non-consensual imagery~\cite{rossler2019ff,li2020celebdf}. Spatial and temporal artefacts may become less reliable as synthesis improves, while physiological cues offer a potentially complementary signal~\cite{ciftci2020fakecatcher}. Identity overlap between training and evaluation can inflate performance by rewarding identity recognition rather than forgery detection.
-
-NeuroPulse evaluates four architecturally distinct pathways: haemodynamic, convolutional spatio-temporal, auxiliary learned-feature and transformer/DCT. ``Orthogonal'' denotes architectural separation, not vector-space orthogonality, zero score correlation or statistical independence. Contributions are: (1)~four-stream evaluation; (2)~nine-region, 117-feature CHROM-rPPG; (3)~EfficientNet-B4, Xception and Swin-Tiny with BiLSTM/attention, ECA, MixUp/CutMix, hard-example mining and a frame curriculum; (4)~comparison of imputation, calibration, fusion weighting and conformal prediction; and (5)~dataset-specific group splitting. The selected fusion excludes Xception. Global cross-dataset identity deduplication and nested validation of the complete fusion pipeline are not established.
-
-\section{Related Work}
-FaceForensics++~\cite{rossler2019ff,chollet2017xception} and Celeb-DF~\cite{li2020celebdf} support evaluation of manipulation, compression and challenging cases; frequency artefacts are studied in~\cite{frank2020leveraging}. EfficientNet~\cite{tan2019efficientnet}, Swin~\cite{liu2021swin} and ECA-Net~\cite{wang2020eca} motivate the visual streams. FakeCatcher~\cite{ciftci2020fakecatcher}, DeepRhythm~\cite{qi2020deeprhythm}, CHROM~\cite{dehaan2013chrom} and POS~\cite{wang2017pos} motivate physiological cues; calibration~\cite{guo2017calibration,kull2017beta} and conformal prediction~\cite{vovk2005conformal} address score reliability. Heterogeneous protocols do not establish superiority over external methods.
-
-% =====================================================================
-\section{Framework, Data and Pre-Processing}
-\subsection{Four-Stream Architecture and Complementarity}
-NeuroPulse exploits complementary failure modes: compression may erase spatial artefacts while leaving physiological incoherence, whereas high-fidelity forgeries may defeat spatial detectors but lack coherent rPPG. Each stream $i\in\{1,\dots,4\}$ emits a fake probability $p_i\in[0,1]$ for late fusion (Fig.~\ref{fig:overview}).
-
-\begin{figure}[!t]
-\centering
-\vspace{-0.2cm}
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[x=1cm,y=1cm,
- b/.style={draw,rounded corners=2pt,align=center,font=\scriptsize,inner sep=2.5pt},
- a/.style={-stealth,thin}]
-\node[b,minimum height=2.3cm,text width=1.1cm] (in) at (0.75,0) {Input video\\[2pt] 60 / 16 frames};
-\node[b,text width=4.7cm] (s1) at (4.45,1.08) {\textbf{I}~Haemodynamic: CHROM rPPG, 9 ROIs, 117-d, stacking};
-\node[b,text width=4.7cm] (s2) at (4.45,0.36) {\textbf{II}~EfficientNet-B4 + BiLSTM + MHA};
-\node[b,text width=4.7cm] (s3) at (4.45,-0.36) {\textbf{III}~Xception + ECA + learned feature branch};
-\node[b,text width=4.7cm] (s4) at (4.45,-1.08) {\textbf{IV}~Swin-T + block-DCT + packed BiLSTM};
-\node[b,minimum height=2.3cm,text width=2.5cm] (f) at (8.55,0) {\textbf{Late fusion}\\Iterative imputation $\to$ beta calibration $\to$ Optuna weights $\bw$ $\to$ temperature $\Tcal$};
-\node[b,minimum height=2.3cm,text width=1.6cm] (o) at (11.3,0) {$\hat p$ and conformal set};
-\foreach \s in {s1,s2,s3,s4}{\draw[a] (in.east)--(\s.west); \draw[a] (\s.east)--(f.west);}
-\draw[a] (f.east)--(o.west);
-\end{tikzpicture}%
+\setlength{\textwidth}{12.2cm}
+\setlength{\textheight}{19.3cm}
+\renewcommand\@pnumwidth{2em}
+\renewcommand\@tocrmarg{3.5em}
+%
+\def\@dottedtocline#1#2#3#4#5{%
+\ifnum #1>\c@tocdepth \else
+\vskip \z@ \@plus.2\p@
+{\leftskip #2\relax \rightskip \@tocrmarg \advance\rightskip by 0pt plus 2cm
+\parfillskip -\rightskip \pretolerance=10000
+\parindent #2\relax\@afterindenttrue
+\interlinepenalty\@M
+\leavevmode
+\@tempdima #3\relax
+\advance\leftskip \@tempdima \null\nobreak\hskip -\leftskip
+{#4}\nobreak
+\leaders\hbox{$\m@th
+\mkern \@dotsep mu\hbox{.}\mkern \@dotsep
+mu$}\hfill
+\nobreak
+\hb@xt@\@pnumwidth{\hfil\normalfont \normalcolor #5}%
+\par}%
+\fi}
+%
+\def\switcht@albion{%
+\def\abstractname{Abstract.}%
+\def\ackname{Acknowledgments.}%
+\def\andname{and}%
+\def\lastandname{\unskip, and}%
+\def\appendixname{Appendix}%
+\def\chaptername{Chapter}%
+\def\claimname{Claim}%
+\def\conjecturename{Conjecture}%
+\def\contentsname{Table of Contents}%
+\def\corollaryname{Corollary}%
+\def\definitionname{Definition}%
+\def\discintname{Disclosure of Interests.}%
+\def\examplename{Example}%
+\def\exercisename{Exercise}%
+\def\figurename{Fig.}%
+\def\keywordname{{\bf Keywords:}}%
+\def\indexname{Index}%
+\def\lemmaname{Lemma}%
+\def\contriblistname{List of Contributors}%
+\def\listfigurename{List of Figures}%
+\def\listtablename{List of Tables}%
+\def\mailname{{\it Correspondence to\/}:}%
+\def\noteaddname{Note added in proof}%
+\def\notename{Note}%
+\def\partname{Part}%
+\def\problemname{Problem}%
+\def\proofname{Proof}%
+\def\propertyname{Property}%
+\def\propositionname{Proposition}%
+\def\questionname{Question}%
+\def\remarkname{Remark}%
+\def\seename{see}%
+\def\solutionname{Solution}%
+\def\subclassname{{\it Subject Classifications\/}:}%
+\def\tablename{Table}%
+\def\theoremname{Theorem}}%
+\switcht@albion
+%
+\def\switcht@francais{%
+\def\abstractname{R\'esum\'e.}%
+\def\ackname{Remerciements.}%
+\def\andname{et}%
+\def\lastandname{ et}%
+\def\appendixname{Appendice}%
+\def\chaptername{Chapitre}%
+\def\claimname{Pr\'etention}%
+\def\conjecturename{Hypoth\`ese}%
+\def\contentsname{Table des mati\`eres}%
+\def\corollaryname{Corollaire}%
+\def\definitionname{D\'efinition}%
+\def\discintname{Mention des Int\'{e}r\^{e}ts.}%
+\def\examplename{Exemple}%
+\def\exercisename{Exercice}%
+\def\figurename{Fig.}%
+\def\keywordname{{\bf Mots-cl\'e:}}%
+\def\indexname{Index}%
+\def\lemmaname{Lemme}%
+\def\contriblistname{Liste des contributeurs}%
+\def\listfigurename{Liste des figures}%
+\def\listtablename{Liste des tables}%
+\def\mailname{{\it Correspondence to\/}:}%
+\def\noteaddname{Note ajout\'ee \`a l'\'epreuve}%
+\def\notename{Remarque}%
+\def\partname{Partie}%
+\def\problemname{Probl\`eme}%
+\def\proofname{Preuve}%
+\def\propertyname{Caract\'eristique}%
+\def\questionname{Question}%
+\def\remarkname{Remarque}%
+\def\seename{voir}%
+\def\solutionname{Solution}%
+\def\subclassname{{\it Subject Classifications\/}:}%
+\def\tablename{Tableau}%
+\def\theoremname{Th\'eor\`eme}%
 }
-\Description{Flow diagram: one video input feeds CHROM-rPPG; EfficientNet-B4 with BiLSTM and multi-head attention; Xception with ECA and a learned-feature branch; and Swin-Tiny with block-DCT and a packed BiLSTM. Their scores feed late fusion and a conformal-prediction output.}
-\caption{NeuroPulse architecture showing four complementary streams, calibrated late fusion, and uncertainty-aware prediction.}
-\label{fig:overview}
-\vspace{-0.3cm}
-\end{figure}
+%
+\def\switcht@deutsch{%
+\def\abstractname{Zusammenfassung.}%
+\def\ackname{Danksagung.}%
+\def\andname{und}%
+\def\lastandname{ und}%
+\def\appendixname{Anhang}%
+\def\chaptername{Kapitel}%
+\def\claimname{Behauptung}%
+\def\conjecturename{Hypothese}%
+\def\contentsname{Inhaltsverzeichnis}%
+\def\corollaryname{Korollar}%
+\def\discintname{Offenlegung von Interessen.}%
+\def\examplename{Beispiel}%
+\def\exercisename{\"Ubung}%
+\def\figurename{Abb.}%
+\def\keywordname{{\bf Schl\"usselw\"orter:}}%
+\def\indexname{Index}%
+\def\contriblistname{Mitarbeiter}%
+\def\listfigurename{Abbildungsverzeichnis}%
+\def\listtablename{Tabellenverzeichnis}%
+\def\mailname{{\it Correspondence to\/}:}%
+\def\noteaddname{Nachtrag}%
+\def\notename{Anmerkung}%
+\def\partname{Teil}%
+\def\proofname{Beweis}%
+\def\propertyname{Eigenschaft}%
+\def\questionname{Frage}%
+\def\remarkname{Anmerkung}%
+\def\seename{siehe}%
+\def\solutionname{L\"osung}%
+\def\subclassname{{\it Subject Classifications\/}:}%
+\def\tablename{Tabelle}%
+}
 
-\subsection{Corpus and Identity-Disjoint Evaluation}
-The corpus combines FaceForensics++~\cite{rossler2019ff} (C23 originals and six manipulation sets, up to 200 each), Celeb-DF\,v2~\cite{li2020celebdf} (150+50 real, 200 synthesised), a DFDC sample~\cite{dolhansky2020dfdc} and a custom 400+400 corpus. Balancing, $n_{\mathrm{balanced}}=\min(|\mathcal R|,|\mathcal F|)$, yields 877 real and 877 fake videos (1,754 total) across 1,042 dataset-recorded identity labels. Dataset-specific keys (source-video number, celebrity identifier, filename or person index) support stratified group $K$-fold ($K{=}5$) evaluation within each dataset, enforcing for each fold $q$,
-\begin{equation}
-\bigl(\mathrm{ID}^{(q)}_{\mathrm{train}}\cap \mathrm{ID}^{(q)}_{\mathrm{val}}\bigr)=\emptyset ,
-\label{eq:leak}
-\end{equation}
-verified by assertion before every run; thresholds are tuned on validation data only. These checks establish separation under dataset-local keys; no cross-dataset person-resolution or duplicate-source audit is documented, so the manuscript does not claim global identity deduplication.
+% Ragged bottom for the actual page
+\def\thisbottomragged{\def\@textbottom{\vskip\z@ plus.0001fil
+\global\let\@textbottom\relax}}
 
-\subsection{Face Localisation, Alignment and Quality Control}
-Stream~I uses MediaPipe FaceMesh~\cite{kartynnik2019facemesh} (468 landmarks) on up to 60 uniformly sampled frames; Streams~II--IV use MTCNN~\cite{zhang2016mtcnn} on $T{=}16$ uniform frames, with a centre-crop fallback. For Streams~III--IV, eye landmarks define roll as $\theta=\operatorname{arctan2}(\Delta y_{\mathrm{eyes}},\Delta x_{\mathrm{eyes}})$; crops are de-rotated when $|\theta|>2^{\circ}$ to reduce pose effects. Crops whose Laplacian variance $\Var[\nabla^{2}I]$ is below 20.0 are rejected as blurry.
+\renewcommand\small{%
+\@setfontsize\small\@ixpt{11}%
+\abovedisplayskip 8.5\p@ \@plus3\p@ \@minus4\p@
+\abovedisplayshortskip \z@ \@plus2\p@
+\belowdisplayshortskip 4\p@ \@plus2\p@ \@minus2\p@
+\def\@listi{\leftmargin\leftmargini
+\parsep 0\p@ \@plus1\p@ \@minus\p@
+\topsep 8\p@ \@plus2\p@ \@minus4\p@
+\itemsep0\p@}%
+\belowdisplayskip \abovedisplayskip
+}
 
-% =====================================================================
-\section{Stream I: Haemodynamic rPPG Analysis}
-Cardiac blood-volume changes produce subtle skin-colour fluctuations (remote photoplethysmography, rPPG). Potential forensic cues are (1)~\emph{spatial coherence}: the pulse wave (roughly 5--10\,m/s) reaches facial regions with structured phase delays that synthesis may disrupt; (2)~\emph{spectral structure} in the 0.7--4\,Hz band; (3)~\emph{heart-rate-variability (HRV) proxies}; and (4)~\emph{phase synchronisation}~\cite{lachaux1999plv} between regions. These are candidate cues, not universal properties of every synthetic video.
+\newenvironment{credits}{%
+\begingroup\small%
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+{-12\p@ \@plus -4\p@ \@minus -4\p@}%
+{-0.5em \@plus -0.22em \@minus -0.1em}%
+{\normalfont\small\bfseries\boldmath}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+{-8\p@ \@plus -4\p@ \@minus -4\p@}%
+{-0.5em \@plus -0.22em \@minus -0.1em}%
+{\normalfont\small\itshape}}%
+}{\endgroup}
 
-Nine convex-hull regions (forehead centre, left/right forehead, cheeks, nose, chin and jaws) provide high capillary density and bilateral symmetry. For region mask $\Omega_r$ in frame $t$, mean RGB colour is extracted and CHROM~\cite{dehaan2013chrom} decomposes reflected light into chrominance channels to suppress specular noise:
-\begin{align}
-\bar{\mathbf c}^{(r)}_t&=\frac{1}{|\Omega_r|}\sum_{(x,y)\in\Omega_r}\mathbf I_t(x,y),\\
-X_{\mathrm{CHROM}}&=3R-2G,\qquad Y_{\mathrm{CHROM}}=1.5R+G-1.5B,\\
-\mathrm{BVP}(t)&=X_{\mathrm{CHROM}}(t)-\frac{\sigma_X}{\sigma_Y}\,Y_{\mathrm{CHROM}}(t),
-\end{align}
-where $R,G,B$ are region-averaged RGB channels and $\sigma_X,\sigma_Y$ are sliding-window standard deviations. In the windowed implementation, mean-normalised signals $R_n,G_n,B_n$ give
-\begin{align}
-X_s&=3R_n-2G_n,\qquad Y_s=1.5R_n+G_n-1.5B_n,\\
-\alpha_c&=\clip\!\Bigl(\tfrac{\sigma(X_s)}{\sigma(Y_s)},\,0,\,10\Bigr),\qquad P=X_s-\alpha_c Y_s,
-\end{align}
-Window length is $w=\max(\lfloor 1.6\,f_s\rfloor,2)$ and step $s=\max(1,\lfloor w/2\rfloor)$ (50\% overlap); overlap-add reconstruction follows. The signal is detrended and passed through a 3rd-order Butterworth band-pass~\cite{butterworth1930}
-\begin{equation}
-\lvert H(\mathrm{j}\omega)\rvert^{2}=\Bigl[1+\Bigl(\frac{\omega^{2}-\omega_L\omega_H}{(\omega_H-\omega_L)\,\omega}\Bigr)^{2n}\Bigr]^{-1},\qquad n=3,
-\end{equation}
-Cutoffs are $f_L{=}0.7$\,Hz and $f_H{=}4.0$\,Hz (42--240\,BPM). Gaps under 30\% of frames are linearly interpolated; POS~\cite{wang2017pos} is the fallback, and spectra use Welch's method~\cite{welch1967} with $n_{\mathrm{perseg}}{=}\min(256,\lfloor T/2\rfloor)$ and $n_{\mathrm{fft}}{=}1024$.
+\frenchspacing
+\widowpenalty=10000
+\clubpenalty=10000
 
-The 117-dimensional descriptor includes \textbf{spectral} features (24: SNR, purity, prominence, dominant frequency, harmonic ratio, entropy, centroid and temporal statistics); \textbf{HRV and phase} (13: eight metrics including RMSSD, SDNN, pNN50 and LF/HF, plus five Hilbert phase/BPM features); \textbf{cross-ROI correlation/coherence} (18); \textbf{geometry} (26 scale-invariant landmark ratios); and \textbf{signal quality/extended bands} (36). Phase synchronisation across region pairs is
-\begin{equation}
-\mathrm{PLV}_{ab}=\left|\frac{1}{N}\sum_{t=1}^{N}e^{\,\mathrm{j}(\phi_a(t)-\phi_b(t))}\right|,
-\end{equation}
-where $\mathrm{j}^{2}=-1$ and $\phi_a(t)$ is the instantaneous Hilbert phase~\cite{lachaux1999plv}. After percentile clipping, scaling and ExtraTrees selection, XGBoost~\cite{chen2016xgboost} (300 trees), LightGBM~\cite{ke2017lightgbm} (8 leaves) and HistGradientBoosting (300 iterations) feed a logistic-regression meta-learner through 5-fold stacked generalisation~\cite{wolpert1992stacking}, trained on an identity-aware 80/20 group split.
+\setlength\oddsidemargin{63\p@}
+\setlength\evensidemargin{63\p@}
+\setlength\marginparwidth{90\p@}
 
-% =====================================================================
-\section{Stream II: EfficientNet-B4 Spatio-Temporal Network}
-The EfficientNet-B4~\cite{tan2019efficientnet} (stochastic-depth rate 0.2; global average pooling) maps each frame $\bx_{b,t}$ to
-\begin{equation}
-\mathbf f_{b,t}=\text{EfficientNet-B4}(\bx_{b,t})\in\R^{1792}.
-\end{equation}
-A 2-layer bidirectional LSTM~\cite{hochreiter1997lstm} models temporal inconsistency (256 hidden units per direction; inter-layer dropout 0.5):
-\begin{align}
-\overrightarrow{\bh}_t&=\mathrm{LSTM}_{\mathrm{fwd}}(\mathbf f_t,\overrightarrow{\bh}_{t-1}),\quad
-\overleftarrow{\bh}_t=\mathrm{LSTM}_{\mathrm{bwd}}(\mathbf f_t,\overleftarrow{\bh}_{t+1}),\\
-\bh_t&=[\overrightarrow{\bh}_t;\overleftarrow{\bh}_t]\in\R^{512}.
-\end{align}
-A 4-head self-attention layer~\cite{vaswani2017attention} with key-padding mask lets each frame attend across the sequence. Residual LayerNorm outputs $\mathbf a_t$ and validity mask $m_t\in\{0,1\}$ feed masked average pooling to produce the 512-d video representation:
-\begin{align}
-\mathrm{head}_h&=\softmax\!\left(\frac{\mathbf Q\mathbf W^{Q}_h(\mathbf K\mathbf W^{K}_h)^{\top}}{\sqrt{d_k}}\right)\mathbf V\mathbf W^{V}_h,\\
-\mathrm{MHA}&=[\mathrm{head}_1;\dots;\mathrm{head}_4]\,\mathbf W^{O},\qquad
-\bz=\frac{\sum_{t=1}^{T}m_t\,\mathbf a_t}{\sum_{t=1}^{T}m_t}.
-\end{align}
-A LayerNorm/GELU MLP head (512$\to$256$\to$128$\to$1; dropout 0.5, 0.25) classifies $\bz$. Focal loss~\cite{lin2017focal} uses $\alpha{=}0.6$, $\gamma{=}2.0$ and label smoothing $\epsilon{=}0.1$. For hard label $y\in\{0,1\}$ and logit $\hat y$, let $p=\sigm(\hat y)$ and $y_\epsilon=y(1-\epsilon)+0.5\epsilon$. The hard-label probability and class weight are defined below; then $p_t^{\mathrm{clip}}=\clip(p_t,10^{-7},1-10^{-7})$ is used for numerical stability. The implemented per-sample loss is
-\begin{align}
-p_t&=py+(1-p)(1-y),\quad \alpha_t=\alpha y+(1-\alpha)(1-y),\\
-\mathcal L_{\mathrm{FL}}(\hat y,y)&=-\alpha_t(1-p_t^{\mathrm{clip}})^\gamma\bigl[y_\epsilon\log p+(1-y_\epsilon)\log(1-p)\bigr].
-\end{align}
-The minibatch loss is the mean per-sample loss. MixUp~\cite{zhang2018mixup} is applied with probability 0.3 per batch and cyclic non-identity pairing ($\lambda\sim\mathrm{Beta}(1.0,1.0)$):
-\begin{align}
-\tilde{\bx}&=\lambda\bx_i+(1-\lambda)\bx_j,\quad \tilde y=\lambda y_i+(1-\lambda)y_j,\\
-\mathcal L_{\mathrm{mix}}&=\lambda\,\mathcal L_{\mathrm{FL}}(\hat y,y_i)+(1-\lambda)\,\mathcal L_{\mathrm{FL}}(\hat y,y_j).
-\end{align}
-The implementation evaluates the focal criterion separately for the two hard targets; $\tilde y$ is not passed to that criterion, and smoothing affects only the BCE target.
+\setlength\headsep{16\p@}
 
-Stochastic weight averaging (SWA)~\cite{izmailov2018swa} from epoch 30 maintains the running mean
-\begin{equation}
-\bar{\boldsymbol\theta}_n=\frac{n-1}{n}\,\bar{\boldsymbol\theta}_{n-1}+\frac{1}{n}\,\boldsymbol\theta_n ,
-\end{equation}
-with the backbone learning rate held at $1/10$ of the base rate. Inference averages five test-time-augmentation (TTA) passes; gradient accumulation over four micro-batches of two videos gives an effective batch of 8. Figure~\ref{fig:eff} reports the training/evaluation curves, while Fig.~\ref{fig:gradcam} provides qualitative examples only.
+\setlength\footnotesep{7.7\p@}
+\setlength\textfloatsep{8mm\@plus 2\p@ \@minus 4\p@}
+\setlength\intextsep{8mm\@plus 2\p@ \@minus 2\p@}
 
-\begin{figure}[!t]
-\centering
-\vspace{-0.2cm}
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{EFFICIENTNET_training_curves.png}
-    \par\smallskip
-    {\small (a) Training}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{EFFICIENTNET_evaluation_plots.png}
-    \par\smallskip
-    {\small (b) Evaluation}
-\end{minipage}
-\Description{The training panel shows loss, AUC, validation F1, precision, recall, and the learning-rate schedule over epochs. The evaluation panel shows a ROC curve, precision-recall curve, confusion matrix, and score distributions for the EfficientNet-B4 classifier.}
-\caption{EfficientNet-B4 training (a) and evaluation (b). SWA begins at epoch 30; validation AUC stabilises near 0.739 at epoch 31.}
-\label{fig:eff}
-\vspace{-0.2cm}
-\end{figure}
+\setcounter{secnumdepth}{2}
 
-\begin{figure}[!t]
-\centering
-\vspace{-0.2cm}
-\includegraphics[width=\linewidth,height=3.4cm,keepaspectratio]{EFFICIENTNET_gradcam_gallery.png}
-\Description{A gallery of Grad-CAM visualisations for three illustrative validation videos. Each row shows frames with coloured activation heatmaps overlaid on faces; the heatmaps are qualitative examples of model attention, not a benchmark of localisation accuracy.}
-\caption{Grad-CAM~\cite{selvaraju2017gradcam} maps (\texttt{conv\_head}) for three illustrative validation videos. The displayed activations are qualitative examples and do not establish general localisation performance.}
-\label{fig:gradcam}
-\vspace{-0.3cm}
-\end{figure}
+\newcounter{chapter}
+\renewcommand\thechapter{\@arabic\c@chapter}
 
-% =====================================================================
-\section{Stream III: Depthwise-Separable Xception Dual-Branch Network}
-Xception~\cite{chollet2017xception} factorises convolution into per-channel depthwise filtering and pointwise $1{\times}1$ mixing, isolating blending-boundary and texture patterns before channel mixing. It yields 2048-d features per frame at $299{\times}299$. ECA-Net~\cite{wang2020eca} reweights pooled channels with a 1D convolution of adaptive kernel size:
-\begin{align}
-k&=\mathrm{odd}\!\left(\left\lceil\frac{\log_2 C+1}{2}\right\rceil\right),\\
-\mathbf g&=\sigm\!\bigl(\mathrm{Conv1d}_k(\mathrm{GAP}(\bF))\bigr),\qquad \hat{\bF}=\mathbf g\odot\bF .
-\end{align}
-For $C{=}2048$, $k{=}7$. A \emph{parallel learned-feature branch} projects attended features and is fused with the temporal (BiLSTM + MHA) representation. The displayed operation contains no explicit transform in the frequency domain, so it is not described here as a standalone frequency transform:
-\begin{align}
-\bz_{\mathrm{freq}}&=\mathrm{LN}\bigl(\mathrm{Linear}_{256}(\mathrm{GELU}(\mathrm{LN}(\mathrm{Linear}_{256}(\mathrm{GAP}(\hat{\bF}))))))\in\R^{256},\\
-\bz_{\mathrm{fused}}&=[\bz_{\mathrm{temporal}};\,\bz_{\mathrm{freq}}]\in\R^{768},
-\end{align}
-The classifier head is an MLP (768$\to$256$\to$128$\to$1; dropout 0.3, 0.15). Focal weights are recomputed per fold. From epoch 10, hard-example mining~\cite{shrivastava2016ohem} scores distance to the decision boundary; a class-normalised sampler refreshed every 5 epochs up-samples samples with $h_i\approx1$:
-\begin{align}
-\alpha_{\mathrm{fold}}&=\frac{N_{\mathrm{real}}}{N_{\mathrm{real}}+N_{\mathrm{fake}}},\\
-h_i&=1-2\,|p_i-0.5|.
-\end{align}
-With probability 0.3, MixUp ($\alpha{=}0.2$) or CutMix~\cite{yun2019cutmix} ($\alpha{=}1.0$) is selected equally often. CutMix simulates blended-face artefacts and encourages local artefact discrimination over global identity cues:
-\begin{equation}
-\tilde{\bx}=\mathbf M\odot\bx_i+(1-\mathbf M)\odot\bx_j,\qquad \lambda_{\mathrm{adj}}=\frac{\|\mathbf M\|_1}{HW},
-\end{equation}
-The mixed label is $\tilde y=\lambda_{\mathrm{adj}}y_i+(1-\lambda_{\mathrm{adj}})y_j$; Fig.~\ref{fig:xcep} shows the training and evaluation results.
+\newif\if@mainmatter \@mainmattertrue
+\newcommand\frontmatter{\cleardoublepage
+\@mainmatterfalse\pagenumbering{Roman}}
+\newcommand\mainmatter{\cleardoublepage
+\@mainmattertrue\pagenumbering{arabic}}
+\newcommand\backmatter{\if@openright\cleardoublepage\else\clearpage\fi
+\@mainmatterfalse}
 
-\begin{figure}[!t]
-\centering
-\vspace{-0.2cm}
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{XCEPTION_training_curves.png}
-    \par\smallskip
-    {\small (a) Training}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{XCEPTION_evaluation_plots.png}
-    \par\smallskip
-    {\small (b) Evaluation}
-\end{minipage}
-\Description{The training panel shows loss, training and validation AUC, validation F1, precision, recall, and the learning-rate schedule over epochs. The evaluation panel shows ROC and precision-recall curves, a confusion matrix, and predicted-score distributions for Xception.}
-\caption{Xception training (a) and evaluation (b). Hard-example mining starts at epoch 10, SWA at epoch 15; peak training/evaluation AUC is 0.785 and evaluation AP is 0.760.}
-\label{fig:xcep}
-\vspace{-0.2cm}
-\end{figure}
+\renewcommand\part{\cleardoublepage
+\thispagestyle{empty}%
+\if@twocolumn
+\onecolumn
+\@tempswatrue
+\else
+\@tempswafalse
+\fi
+\null\vfil
+\secdef\@part\@spart}
 
-% =====================================================================
-\section{Stream IV: Hierarchical Swin Transformer with DCT Branch}
-Swin-Tiny~\cite{liu2021swin} (patch size 4, $M{=}7$ windows) applies attention within non-overlapping $M{\times}M$ windows, reducing complexity from $O(N^2)$ to $O(NM^2)$ for $N$ patches. Alternating shifted windows connect boundaries without extra attention cost. Patch merging yields maps at $\tfrac H4{\times}\tfrac W4$, $\tfrac H8{\times}\tfrac W8$, $\tfrac H{16}{\times}\tfrac W{16}$ and $\tfrac H{32}{\times}\tfrac W{32}$, capturing fine-to-coarse cues and border-spanning blending discontinuities. Each block computes
-\begin{equation}
-\text{W-MSA}(\mathbf Q,\mathbf K,\mathbf V)=\softmax\!\left(\frac{\mathbf Q\mathbf K^{\top}}{\sqrt d}+B\right)\mathbf V,
-\end{equation}
-with a learnable relative position bias $B$. To keep padding from skewing normalisation statistics, padded frames bypass the backbone:
-\begin{equation}
-\mathbf s_t=\begin{cases}\mathrm{Swin}(\bx_t)&m_t=1,\\ \mathbf 0&m_t=0.\end{cases}
-\end{equation}
-The 768-d output is re-weighted by a fixed-kernel ($k{=}5$) ECA layer and projected to 384-d.
+\def\@part[#1]#2{%
+\ifnum \c@secnumdepth >-2\relax
+\refstepcounter{part}%
+\addcontentsline{toc}{part}{\thepart\hspace{1em}#1}%
+\else
+\addcontentsline{toc}{part}{#1}%
+\fi
+\markboth{}{}%
+{\centering
+\interlinepenalty \@M
+\normalfont
+\ifnum \c@secnumdepth >-2\relax
+\huge\bfseries \partname~\thepart
+\par
+\vskip 20\p@
+\fi
+\Huge \bfseries #2\par}%
+\@endpart}
+\def\@spart#1{%
+{\centering
+\interlinepenalty \@M
+\normalfont
+\Huge \bfseries #1\par}%
+\@endpart}
+\def\@endpart{\vfil\newpage
+\if@twoside
+\null
+\thispagestyle{empty}%
+\newpage
+\fi
+\if@tempswa
+\twocolumn
+\fi}
 
-\subsubsection{On-the-Fly DCT Branch.} Unlike Stream~III, this branch analyses raw pixels. A precomputed orthonormal DCT-II basis~\cite{ahmed1974dct} is applied to a bilinearly down-sampled $64{\times}64$ luminance image, with $N=64$, $\alpha_0=\sqrt{1/N}$ and $\alpha_k=\sqrt{2/N}$ for $k>0$:
-\begin{align}
-D_{k,n}&=\alpha_k\cos\!\left(\frac{\pi k(2n+1)}{2N}\right),\quad k,n\in\{0,\dots,N{-}1\},\\
-\mathbf X_{\mathrm{DCT}}&=\mathbf D\,\mathbf I_{\mathrm{gray}}\,\mathbf D^{\top},\quad I_{\mathrm{gray}}=0.299\,R+0.587\,G+0.114\,B.
-\end{align}
-Log-normalised coefficients, $\hat X_{k,l}=\log(|X_{k,l}|+10^{-6})$, are partitioned into 64 non-overlapping $8{\times}8$ blocks in the full-frame DCT coefficient array (not independent image-space block transforms). Their means $\mu_b$ and standard deviations $\sigma_b$ form
-\begin{equation}
-\mathbf f_{\mathrm{DCT}}=[\mu_1,\sigma_1,\mu_2,\sigma_2,\ldots,\mu_{64},\sigma_{64}]\in\R^{128},
-\end{equation}
-A two-layer MLP encodes this as a 192-d frequency representation. Packed sequences keep padding out of the BiLSTM (input 384, hidden 256, 2 layers; Xavier-uniform input, orthogonal recurrent weights, forget-gate bias 1.0). For sample $b$ in batch $B$, the valid length and 704-d fused representation are
-\begin{align}
-\ell_b&=\sum_{t=1}^{T}m_{b,t},\qquad\forall b\in[B],\\
-\bz&=[\bz_{\mathrm{temporal}}^{512};\,\bz_{\mathrm{freq}}^{192}],
-\end{align}
-followed by 4-head attention as in Stream~II and an MLP head (704$\to$192$\to$96$\to$1). The training sequence length follows a progressive curriculum (validation always uses 16 frames):
-\begin{equation}
-T_{\mathrm{train}}(e)=\begin{cases}5&e\in[0,4],\\10&e\in[5,14],\\16&e\ge15.\end{cases}
-\end{equation}
-All five folds are trained and their out-of-fold (OOF) predictions pooled: per-fold best AUCs are 0.762, 0.836, 0.802, 0.781 and 0.776; mean $0.791\pm0.026$; pooled OOF AUC 0.789 (95\% CI 0.768--0.810; Fig.~\ref{fig:swin}).
+\newcommand\chapter{\clearpage
+\thispagestyle{empty}%
+\global\@topnum\z@
+\@afterindentfalse
+\secdef\@chapter\@schapter}
+\def\@chapter[#1]#2{\ifnum \c@secnumdepth >\m@ne
+\if@mainmatter
+\refstepcounter{chapter}%
+\typeout{\@chapapp\space\thechapter.}%
+\addcontentsline{toc}{chapter}%
+{\protect\numberline{\thechapter}#1}%
+\else
+\addcontentsline{toc}{chapter}{#1}%
+\fi
+\else
+\addcontentsline{toc}{chapter}{#1}%
+\fi
+\chaptermark{#1}%
+\addtocontents{lof}{\protect\addvspace{10\p@}}%
+\addtocontents{lot}{\protect\addvspace{10\p@}}%
+\if@twocolumn
+\@topnewpage[\@makechapterhead{#2}]%
+\else
+\@makechapterhead{#2}%
+\@afterheading
+\fi}
+\def\@makechapterhead#1{%
+{\centering
+\ifnum \c@secnumdepth >\m@ne
+\if@mainmatter
+\large\bfseries \@chapapp{} \thechapter
+\par\nobreak
+\vskip 20\p@
+\fi
+\fi
+\interlinepenalty\@M
+\Large \bfseries #1\par\nobreak
+\vskip 40\p@
+}}
+\def\@schapter#1{\if@twocolumn
+\@topnewpage[\@makeschapterhead{#1}]%
+\else
+\@makeschapterhead{#1}%
+\@afterheading
+\fi}
+\def\@makeschapterhead#1{%
+{\centering
+\normalfont
+\interlinepenalty\@M
+\Large \bfseries #1\par\nobreak
+\vskip 40\p@
+}}
 
-\begin{figure}[!t]
-\centering
-\vspace{-0.2cm}
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{SWIN_training_curves.png}
-    \par\smallskip
-    {\small (a) Training}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.495\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{SWIN_evaluation_plots.png}
-    \par\smallskip
-    {\small (b) Evaluation}
-\end{minipage}
-\Description{The training panel shows the selected Swin-Tiny fold with loss, training and validation AUC, training phases, and learning-rate schedule over epochs. The evaluation panel shows pooled out-of-fold ROC and precision-recall curves, a confusion matrix, and predicted-score distributions.}
-\caption{Swin-Tiny training (a) uses 5/10/16 frames; pooled OOF evaluation (b) covers 1,753 videos (AUC 0.789).}
-\label{fig:swin}
-\vspace{-0.3cm}
-\end{figure}
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+{-18\p@ \@plus -4\p@ \@minus -4\p@}%
+{12\p@ \@plus 4\p@ \@minus 4\p@}%
+{\normalfont\large\bfseries\boldmath
+\rightskip=\z@ \@plus 8em\pretolerance=10000 }}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+{-18\p@ \@plus -4\p@ \@minus -4\p@}%
+{8\p@ \@plus 4\p@ \@minus 4\p@}%
+{\normalfont\normalsize\bfseries\boldmath
+\rightskip=\z@ \@plus 8em\pretolerance=10000 }}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+{-18\p@ \@plus -4\p@ \@minus -4\p@}%
+{-0.5em \@plus -0.22em \@minus -0.1em}%
+{\normalfont\normalsize\bfseries\boldmath}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+{-12\p@ \@plus -4\p@ \@minus -4\p@}%
+{-0.5em \@plus -0.22em \@minus -0.1em}%
+{\normalfont\normalsize\itshape}}
+\renewcommand\subparagraph[1]{\typeout{LLNCS warning: You should not use
+\string\subparagraph\space with this class}\vskip0.5cm
+You should not use \verb|\subparagraph| with this class.\vskip0.5cm}
 
-% =====================================================================
-\section{Calibrated Late-Fusion Ensemble}
-The reported stream coverages are 1,416, 367, 353 and 1,753 videos; the fusion cohort contains 1,520 videos with at least two observed scores. A Bayesian-ridge iterative imputer (20 iterations) completes the partially observed score matrix. The missing-cell count remains unreported pending reconstruction of the deduplicated score join. Because multiple completed datasets are not established, this is described as iterative imputation rather than full multiple imputation by chained equations (MICE); the broader framework is described in~\cite{vanbuuren2011mice}. Each stream is beta-calibrated~\cite{kull2017beta} using 10-fold out-of-fold (OOF) predictions, with $\alpha_{\mathrm{cal}},\beta_{\mathrm{cal}}\ge0$ and $c\in\R$:
-\begin{equation}
-p_{\mathrm{cal}}=\frac{e^{c}\,p^{\alpha_{\mathrm{cal}}}}{e^{c}\,p^{\alpha_{\mathrm{cal}}}+(1-p)^{\beta_{\mathrm{cal}}}}.
-\end{equation}
-On the aligned $N_v\times4$ score matrix, we compare (1)~simple average $P_{\mathrm{final}}=\tfrac14\sum_{i=1}^{4}P_i$; (2)~AUC-weighted average $P_{\mathrm{final}}=\sum_{i=1}^{4}w_iP_i$, where $w_i=\mathrm{AUC}_i/\sum_j\mathrm{AUC}_j$; (3)~rank averaging, $r_i(k)=\mathrm{rank}(P_i(k))/N_v$ and $P_{\mathrm{final}}=\tfrac14\sum_i r_i$, invariant to calibration differences; (4)~a logistic-regression meta-learner on $[P_{\mathrm{rPPG}},P_{\mathrm{Eff}},P_{\mathrm{Xcep}},P_{\mathrm{Swin}}]$ with 5-fold OOF prediction; and (5)~Optuna~\cite{akiba2019optuna} with NSGA-II~\cite{deb2002nsga2}, maximising AUC and F1 jointly from 10-fold OOF predictions. Normalized-AUC weights are a reference, not Bayesian model averaging. Let $\Delta^{3}=\{\bw\in\R^{4}_{\ge0}:\sum_iw_i=1\}$; $\mathcal{P}$ denotes weights Pareto-optimal for $\mathrm{AUC}(P_{\bw})$ and $F_1(P_{\bw})$:
-\begin{equation}
-\bw^{*}\in\mathcal{P},\quad P_{\bw}=\sum_iw_iP_i.
-\end{equation}
-The search selects a 3-model subset (rPPG, EfficientNet, Swin-Tiny) with $w_{\mathrm{rPPG}}{=}0.1063$, $w_{\mathrm{Eff}}{=}0.3435$, $w_{\mathrm{Swin}}{=}0.5502$, excluding Xception (i.e., $w_{\mathrm{Xcep}}=0$). The displayed weights are rounded. With learned temperature $\Tcal{=}0.711$~\cite{guo2017calibration}, the calibrated ensemble score is
-\begin{equation}
-\hat p=\sigm\!\left(\frac{\logit(\bw^{\top}\bp)}{\Tcal}\right).
-\end{equation}
-Because $x\mapsto\sigm(\logit(x)/\Tcal)$ is strictly increasing on $(0,1)$, temperature scaling changes calibration but not ranking-based AUC; the weighting determines the ranking gain. The operating threshold is the Youden-J optimum on validation data, $\tau^{*}=0.4377$ (the F1-optimal variant is $\tau^{*}=\argmax_{\tau\in[0.05,0.95]}F_1(\tau)$). Split-conformal prediction~\cite{vovk2005conformal} uses $s(x,y)=1-\hat p_y(x)$ and $\mathcal C(x)=\{y:s(x,y)\le\hat q\}$, where $\hat q$ is the $\lceil(n+1)(1-\alpha)\rceil/n$ quantile of calibration scores; under exchangeability, $\Pr\{y\in\mathcal C(x)\}\ge1-\alpha$.
+\DeclareMathSymbol{\Gamma}{\mathalpha}{letters}{"00}
+\DeclareMathSymbol{\Delta}{\mathalpha}{letters}{"01}
+\DeclareMathSymbol{\Theta}{\mathalpha}{letters}{"02}
+\DeclareMathSymbol{\Lambda}{\mathalpha}{letters}{"03}
+\DeclareMathSymbol{\Xi}{\mathalpha}{letters}{"04}
+\DeclareMathSymbol{\Pi}{\mathalpha}{letters}{"05}
+\DeclareMathSymbol{\Sigma}{\mathalpha}{letters}{"06}
+\DeclareMathSymbol{\Upsilon}{\mathalpha}{letters}{"07}
+\DeclareMathSymbol{\Phi}{\mathalpha}{letters}{"08}
+\DeclareMathSymbol{\Psi}{\mathalpha}{letters}{"09}
+\DeclareMathSymbol{\Omega}{\mathalpha}{letters}{"0A}
 
-% =====================================================================
-\section{Experiments and Results}
-\subsubsection{Protocol.} Stream~I uses an identity-aware 80/20 group split; Streams~II--IV use the dataset-local five-fold split in Eq.~\eqref{eq:leak}. Runs use seed 42; stratified bootstrap CIs use 2,000 resamples. AUC is primary, with available accuracy/F1/precision/recall/EER reported. Stream thresholds are 0.5; the ensemble uses $\tau^{*}$. Deep streams use AdamW~\cite{loshchilov2019adamw}, backbone LR 0.1 times base, max-norm clipping 1.0, freezing at epochs 0--4 and a 3-epoch unfreezing ramp. LR/weight decay are $5{\times}10^{-5}/5{\times}10^{-4}$ (EfficientNet) and $10^{-4}/10^{-2}$ (Xception); label smoothing is 0.1/0.05/0.08, SWA starts at epochs 30/15/15, and TTA uses 5/6/6 passes (Swin: focal $\alpha{=}0.5$, MixUp $\alpha{=}0.4$).
+\let\footnotesize\small
 
-\begin{table}[!t]
-\centering
-\caption{Reported metrics by protocol: I, 80/20; II--III, fold 0; IV, pooled OOF ($n{=}1753$); ensemble, aligned set ($n{=}1520$). Protocols differ; rows are not direct comparisons.}
-\label{tab:individual}
+\if@custvec
+\DeclareRobustCommand\vec[1]{\mathchoice{\mbox{\boldmath$\displaystyle#1$}}
+{\mbox{\boldmath$\textstyle#1$}}
+{\mbox{\boldmath$\scriptstyle#1$}}
+{\mbox{\boldmath$\scriptscriptstyle#1$}}}
+\fi
+
+\def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil\squareforqed
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+
+\def\getsto{\mathrel{\mathchoice {\vcenter{\offinterlineskip
+\halign{\hfil
+$\displaystyle##$\hfil\cr\gets\cr\to\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\textstyle##$\hfil\cr\gets
+\cr\to\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptstyle##$\hfil\cr\gets
+\cr\to\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptscriptstyle##$\hfil\cr
+\gets\cr\to\cr}}}}}
+\def\lid{\mathrel{\mathchoice {\vcenter{\offinterlineskip\halign{\hfil
+$\displaystyle##$\hfil\cr<\cr\noalign{\vskip1.2pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\textstyle##$\hfil\cr<\cr
+\noalign{\vskip1.2pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptstyle##$\hfil\cr<\cr
+\noalign{\vskip1pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptscriptstyle##$\hfil\cr
+<\cr
+\noalign{\vskip0.9pt}=\cr}}}}}
+\def\gid{\mathrel{\mathchoice {\vcenter{\offinterlineskip\halign{\hfil
+$\displaystyle##$\hfil\cr>\cr\noalign{\vskip1.2pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\textstyle##$\hfil\cr>\cr
+\noalign{\vskip1.2pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptstyle##$\hfil\cr>\cr
+\noalign{\vskip1pt}=\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptscriptstyle##$\hfil\cr
+>\cr
+\noalign{\vskip0.9pt}=\cr}}}}}
+\def\grole{\mathrel{\mathchoice {\vcenter{\offinterlineskip
+\halign{\hfil
+$\displaystyle##$\hfil\cr>\cr\noalign{\vskip-1pt}<\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\textstyle##$\hfil\cr
+>\cr\noalign{\vskip-1pt}<\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptstyle##$\hfil\cr
+>\cr\noalign{\vskip-0.8pt}<\cr}}}
+{\vcenter{\offinterlineskip\halign{\hfil$\scriptscriptstyle##$\hfil\cr
+>\cr\noalign{\vskip-0.3pt}<\cr}}}}}
+\def\bbbr{{\rm I\!R}}
+\def\bbbm{{\rm I\!M}}
+\def\bbbn{{\rm I\!N}}
+\def\bbbf{{\rm I\!F}}
+\def\bbbh{{\rm I\!H}}
+\def\bbbk{{\rm I\!K}}
+\def\bbbp{{\rm I\!P}}
+\def\bbbone{{\mathchoice {\rm 1\mskip-4mu l} {\rm 1\mskip-4mu l}
+{\rm 1\mskip-4.5mu l} {\rm 1\mskip-5mu l}}}
+\def\bbbc{{\mathchoice {\setbox0=\hbox{$\displaystyle\rm C$}\hbox{\hbox
+to0pt{\kern0.4\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\textstyle\rm C$}\hbox{\hbox
+to0pt{\kern0.4\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptstyle\rm C$}\hbox{\hbox
+to0pt{\kern0.4\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptscriptstyle\rm C$}\hbox{\hbox
+to0pt{\kern0.4\wd0\vrule height0.9\ht0\hss}\box0}}}}
+\def\bbbq{{\mathchoice {\setbox0=\hbox{$\displaystyle\rm Q$}\hbox{\raise
+0.15\ht0\hbox to0pt{\kern0.4\wd0\vrule height0.8\ht0\hss}\box0}}
+{\setbox0=\hbox{$\textstyle\rm Q$}\hbox{\raise
+0.15\ht0\hbox to0pt{\kern0.4\wd0\vrule height0.8\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptstyle\rm Q$}\hbox{\raise
+0.15\ht0\hbox to0pt{\kern0.4\wd0\vrule height0.7\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptscriptstyle\rm Q$}\hbox{\raise
+0.15\ht0\hbox to0pt{\kern0.4\wd0\vrule height0.7\ht0\hss}\box0}}}}
+\def\bbbt{{\mathchoice {\setbox0=\hbox{$\displaystyle\rm T$}\hbox{\hbox to0pt{\kern0.3\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\textstyle\rm T$}\hbox{\hbox
+to0pt{\kern0.3\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptstyle\rm T$}\hbox{\hbox
+to0pt{\kern0.3\wd0\vrule height0.9\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptscriptstyle\rm T$}\hbox{\hbox
+to0pt{\kern0.3\wd0\vrule height0.9\ht0\hss}\box0}}}}
+\def\bbbs{{\mathchoice
+{\setbox0=\hbox{$\displaystyle \rm S$}\hbox{\raise0.5\ht0\hbox
+to0pt{\kern0.35\wd0\vrule height0.45\ht0\hss}\hbox
+to0pt{\kern0.55\wd0\vrule height0.5\ht0\hss}\box0}}
+{\setbox0=\hbox{$\textstyle \rm S$}\hbox{\raise0.5\ht0\hbox
+to0pt{\kern0.35\wd0\vrule height0.45\ht0\hss}\hbox
+to0pt{\kern0.55\wd0\vrule height0.5\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptstyle \rm S$}\hbox{\raise0.5\ht0\hbox
+to0pt{\kern0.35\wd0\vrule height0.45\ht0\hss}\raise0.05\ht0\hbox
+to0pt{\kern0.5\wd0\vrule height0.45\ht0\hss}\box0}}
+{\setbox0=\hbox{$\scriptscriptstyle\rm S$}\hbox{\raise0.5\ht0\hbox
+to0pt{\kern0.4\wd0\vrule height0.45\ht0\hss}\raise0.05\ht0\hbox
+to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
+\def\bbbz{{\mathchoice {\hbox{$\mathsf\textstyle Z\kern-0.4em Z$}}
+{\hbox{$\mathsf\textstyle Z\kern-0.4em Z$}}
+{\hbox{$\mathsf\scriptstyle Z\kern-0.3em Z$}}
+{\hbox{$\mathsf\scriptscriptstyle Z\kern-0.2em Z$}}}}
+
+\let\ts\,
+
+\setlength\leftmargini{17\p@}
+\setlength\leftmargin{\leftmargini}
+\setlength\leftmarginii{\leftmargini}
+\setlength\leftmarginiii{\leftmargini}
+\setlength\leftmarginiv{\leftmargini}
+\setlength\labelsep{.5em}
+\setlength\labelwidth{\leftmargini}
+\addtolength\labelwidth{-\labelsep}
+
+\def\@listI{\leftmargin\leftmargini
+\parsep 0\p@ \@plus1\p@ \@minus\p@
+\topsep 8\p@ \@plus2\p@ \@minus4\p@
+\itemsep0\p@}
+\let\@listi\@listI
+\@listi
+\def\@listii{\leftmargin\leftmarginii
+\labelwidth\leftmarginii
+\advance\labelwidth-\labelsep
+\topsep 0\p@ \@plus2\p@ \@minus\p@}
+\def\@listiii{\leftmargin\leftmarginiii
+\labelwidth\leftmarginiii
+\advance\labelwidth-\labelsep
+\topsep 0\p@ \@plus\p@\@minus\p@
+\parsep \z@
+\partopsep \p@ \@plus\z@ \@minus\p@}
+
+\renewcommand\labelitemi{\normalfont\bfseries --}
+\renewcommand\labelitemii{$\m@th\bullet$}
+
+\setlength\arraycolsep{1.4\p@}
+\setlength\tabcolsep{1.4\p@}
+
+\def\tableofcontents{\chapter*{\contentsname\@mkboth{{\contentsname}}%
+{{\contentsname}}}
+\def\authcount##1{\setcounter{auco}{##1}\setcounter{@auth}{1}}
+\def\lastand{\ifnum\value{auco}=2\relax
+\unskip{} \andname\
+\else
+\unskip \lastandname\
+\fi}%
+\def\and{\stepcounter{@auth}\relax
+\ifnum\value{@auth}=\value{auco}%
+\lastand
+\else
+\unskip,
+\fi}%
+\@starttoc{toc}\if@restonecol\twocolumn\fi}
+
+\def\l@part#1#2{\addpenalty{\@secpenalty}%
+\addvspace{2em plus\p@}%
+\begingroup
+\parindent \z@
+\rightskip \z@ plus 5em
+\hrule\vskip5pt
+\large
+\bfseries\boldmath
+\leavevmode
+#1\par
+\vskip5pt
+\hrule
+\vskip1pt
+\nobreak
+\endgroup}
+
+\def\@dotsep{2}
+
+\let\phantomsection=\relax
+
+\def\hyperhrefextend{\ifx\hyper@anchor\@undefined\else
+{}\fi}
+
+\def\addnumcontentsmark#1#2#3{%
+\addtocontents{#1}{\protect\contentsline{#2}{\protect\numberline
+{\thechapter}#3}{\thepage}\hyperhrefextend}}%
+\def\addcontentsmark#1#2#3{%
+\addtocontents{#1}{\protect\contentsline{#2}{#3}{\thepage}\hyperhrefextend}}%
+\def\addcontentsmarkwop#1#2#3{%
+\addtocontents{#1}{\protect\contentsline{#2}{#3}{0}\hyperhrefextend}}%
+
+\def\@adcmk[#1]{\ifcase #1 \or
+\def\@gtempa{\addnumcontentsmark}%
+\or \def\@gtempa{\addcontentsmark}%
+\or \def\@gtempa{\addcontentsmarkwop}%
+\fi\@gtempa{toc}{chapter}%
+}
+\def\addtocmark{%
+\phantomsection
+\@ifnextchar[{\@adcmk}{\@adcmk[3]}%
+}
+
+\def\l@chapter#1#2{\addpenalty{-\@highpenalty}
+\vskip 1.0em plus 1pt \@tempdima 1.5em \begingroup
+\parindent \z@ \rightskip \@tocrmarg
+\advance\rightskip by 0pt plus 2cm
+\parfillskip -\rightskip \pretolerance=10000
+\leavevmode \advance\leftskip\@tempdima \hskip -\leftskip
+{\large\bfseries\boldmath#1}\ifx0#2\hfil\null
+\else
+\nobreak
+\leaders\hbox{$\m@th \mkern \@dotsep mu.\mkern \@dotsep mu$}\hfill
+\nobreak\hbox to\@pnumwidth{\hss #2}%
+\fi\par
+\penalty\@highpenalty \endgroup}
+
+\def\l@title#1#2{\addpenalty{-\@highpenalty}
+\addvspace{8pt plus 1pt}
+\@tempdima \z@
+\begingroup
+\parindent \z@ \rightskip \@tocrmarg
+\advance\rightskip by 0pt plus 2cm
+\parfillskip -\rightskip \pretolerance=10000
+\leavevmode \advance\leftskip\@tempdima \hskip -\leftskip
+#1\nobreak
+\leaders\hbox{$\m@th \mkern \@dotsep mu.\mkern \@dotsep mu$}\hfill
+\nobreak\hbox to\@pnumwidth{\hss #2}\par
+\penalty\@highpenalty \endgroup}
+
+\def\l@author#1#2{\addpenalty{\@highpenalty}
+\@tempdima=15\p@
+\begingroup
+\parindent \z@ \rightskip \@tocrmarg
+\advance\rightskip by 0pt plus 2cm
+\pretolerance=10000
+\leavevmode \advance\leftskip\@tempdima
+\textit{#1}\par
+\penalty\@highpenalty \endgroup}
+
+\setcounter{tocdepth}{0}
+\newdimen\tocchpnum
+\newdimen\tocsecnum
+\newdimen\tocsectotal
+\newdimen\tocsubsecnum
+\newdimen\tocsubsectotal
+\newdimen\tocsubsubsecnum
+\newdimen\tocsubsubsectotal
+\newdimen\tocparanum
+\newdimen\tocparatotal
+\newdimen\tocsubparanum
+\tocchpnum=\z@
+\tocsecnum=15\p@
+\tocsubsecnum=23\p@
+\tocsubsubsecnum=27\p@
+\tocparanum=35\p@
+\tocsubparanum=43\p@
+\def\calctocindent{%
+\tocsectotal=\tocchpnum
+\advance\tocsectotal by\tocsecnum
+\tocsubsectotal=\tocsectotal
+\advance\tocsubsectotal by\tocsubsecnum
+\tocsubsubsectotal=\tocsubsectotal
+\advance\tocsubsubsectotal by\tocsubsubsecnum
+\tocparatotal=\tocsubsubsectotal
+\advance\tocparatotal by\tocparanum}
+\calctocindent
+
+\def\l@section{\@dottedtocline{1}{\tocchpnum}{\tocsecnum}}
+\def\l@subsection{\@dottedtocline{2}{\tocsectotal}{\tocsubsecnum}}
+\def\l@subsubsection{\@dottedtocline{3}{\tocsubsectotal}{\tocsubsubsecnum}}
+\def\l@paragraph{\@dottedtocline{4}{\tocsubsubsectotal}{\tocparanum}}
+\def\l@subparagraph{\@dottedtocline{5}{\tocparatotal}{\tocsubparanum}}
+
+\def\listoffigures{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn
+\fi\section*{\listfigurename\@mkboth{{\listfigurename}}{{\listfigurename}}}
+\@starttoc{lof}\if@restonecol\twocolumn\fi}
+\def\l@figure{\@dottedtocline{1}{0em}{1.5em}}
+
+\def\listoftables{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn
+\fi\section*{\listtablename\@mkboth{{\listtablename}}{{\listtablename}}}
+\@starttoc{lot}\if@restonecol\twocolumn\fi}
+\let\l@table\l@figure
+
+\renewcommand\listoffigures{%
+\section*{\listfigurename
+\@mkboth{\listfigurename}{\listfigurename}}%
+\@starttoc{lof}%
+}
+
+\renewcommand\listoftables{%
+\section*{\listtablename
+\@mkboth{\listtablename}{\listtablename}}%
+\@starttoc{lot}%
+}
+
+\ifx\oribibl\undefined
+\ifx\citeauthoryear\undefined
+\renewenvironment{thebibliography}[1]
+{\section*{\refname}
+\def\@biblabel##1{##1.}
 \small
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-\textbf{Model} & \textbf{AUC} & \textbf{Acc} & \textbf{F1} & \textbf{Prec} & \textbf{EER}\\
-\midrule
-I\ \ rPPG (ML stacking) & 0.628 & 61.9\% & 0.618 & 0.569 & ---\\
-II\ \ EfficientNet-B4 & 0.739 & 69.2\% & 0.676 & 0.652 & 0.302\\
-III\ \ Xception + ECA + aux. branch & 0.785 & 71.4\% & 0.689 & 0.709 & 0.269\\
-IV\ \ Swin-Tiny + DCT (OOF) & 0.789 & 71.8\% & 0.721 & 0.714 & 0.284\\
-\midrule
-\textbf{NeuroPulse ensemble} & \textbf{0.8081} & \textbf{72.9\%} & \textbf{0.734} & \textbf{0.693} & ---\\
-\bottomrule
-\end{tabular}
-\Description{Metrics table comparing rPPG, EfficientNet-B4, Xception, Swin-Tiny and the NeuroPulse ensemble by AUC, accuracy, F1, precision and equal error rate. The caption identifies the different evaluation protocols and sample sizes.}
-\end{table}
-
-\begin{table}[!t]
-\centering
-\caption{Fusion ablation on the aligned set.}
-\label{tab:ablation}
+\list{\@biblabel{\@arabic\c@enumiv}}%
+{\settowidth\labelwidth{\@biblabel{#1}}%
+\leftmargin\labelwidth
+\advance\leftmargin\labelsep
+\if@openbib
+\advance\leftmargin\bibindent
+\itemindent -\bibindent
+\listparindent \itemindent
+\parsep \z@
+\fi
+\usecounter{enumiv}%
+\let\p@enumiv\@empty
+\renewcommand\theenumiv{\@arabic\c@enumiv}}%
+\if@openbib
+\renewcommand\newblock{\par}%
+\else
+\renewcommand\newblock{\hskip .11em \@plus.33em \@minus.07em}%
+\fi
+\sloppy\clubpenalty4000\widowpenalty4000%
+\sfcode`\.=\@m}
+{\def\@noitemerr
+{\@latex@warning{Empty `thebibliography' environment}}%
+\endlist}
+\def\@lbibitem[#1]#2{\item[{[#1]}\hfill]\if@filesw
+{\let\protect\noexpand\immediate
+\write\@auxout{\string\bibcite{#2}{#1}}}\fi\ignorespaces}
+\newcount\@tempcntc
+\def\@citex[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+\@tempcnta\z@\@tempcntb\m@ne\def\@citea{}\@cite{\@for\@citeb:=#2\do
+{\@ifundefined
+{b@\@citeb}{\@citeo\@tempcntb\m@ne\@citea\def\@citea{,}{\bfseries
+?}\@warning
+{Citation `\@citeb' on page \thepage \space undefined}}%
+{\setbox\z@\hbox{\global\@tempcntc0\csname b@\@citeb\endcsname\relax}%
+\ifnum\@tempcntc=\z@ \@citeo\@tempcntb\m@ne
+\@citea\def\@citea{,}\hbox{\csname b@\@citeb\endcsname}%
+\else
+\advance\@tempcntb\@ne
+\ifnum\@tempcntb=\@tempcntc
+\else\advance\@tempcntb\m@ne\@citeo
+\@tempcnta\@tempcntc\@tempcntb\@tempcntc\fi\fi}}\@citeo}{#1}}
+\def\@citeo{\ifnum\@tempcnta>\@tempcntb\else
+\@citea\def\@citea{,\,\hskip\z@skip}%
+\ifnum\@tempcnta=\@tempcntb\the\@tempcnta\else
+{\advance\@tempcnta\@ne\ifnum\@tempcnta=\@tempcntb \else
+\def\@citea{--}\fi
+\advance\@tempcnta\m@ne\the\@tempcnta\@citea\the\@tempcntb}\fi\fi}
+\else
+\renewenvironment{thebibliography}[1]
+{\section*{\refname}
 \small
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Strategy} & \textbf{AUC} & \textbf{F1}\\
-\midrule
-Swin only (baseline) & 0.788 & 0.728\\
-Simple average / logit-space average & 0.802 & 0.715 / 0.716\\
-AUC-weighted / normalized-AUC weights & 0.804 / 0.803 & 0.713 / 0.714\\
-Rank-based & 0.787 & ---\\
-Meta-learner LR (OOF) & 0.804 & 0.717\\
-\textbf{Optuna multi-objective + $\Tcal{=}0.711$} & \textbf{0.8081} & \textbf{0.734}\\
-\bottomrule
-\end{tabular}
-\Description{Fusion ablation table comparing Swin-only, simple average, AUC-weighted, rank-based, logistic-regression meta-learner and Optuna multi-objective fusion by AUC and F1 on the aligned set.}
-\end{table}
+\list{}%
+{\settowidth\labelwidth{}%
+\leftmargin\parindent
+\itemindent=-\parindent
+\labelsep=\z@
+\if@openbib
+\advance\leftmargin\bibindent
+\itemindent -\bibindent
+\listparindent \itemindent
+\parsep \z@
+\fi
+\usecounter{enumiv}%
+\let\p@enumiv\@empty
+\renewcommand\theenumiv{}}%
+\if@openbib
+\renewcommand\newblock{\par}%
+\else
+\renewcommand\newblock{\hskip .11em \@plus.33em \@minus.07em}%
+\fi
+\sloppy\clubpenalty4000\widowpenalty4000%
+\sfcode`\.=\@m}
+{\def\@noitemerr
+{\@latex@warning{Empty `thebibliography' environment}}%
+\endlist}
+\def\@cite#1{#1}%
+\def\@lbibitem[#1]#2{\item[]\if@filesw
+{\def\protect##1{\string ##1\space}\immediate
+\write\@auxout{\string\bibcite{#2}{#1}}}\fi\ignorespaces}
+\fi
+\else
+\@cons\@openbib@code{\noexpand\small}
+\fi
 
-\subsubsection{Results.} Aligned-set AUC improves from 0.788 (Swin-only) to 0.8081 (gain 0.020; Table~\ref{tab:ablation}). Bootstrap 95\% CIs are AUC [0.786, 0.829], accuracy 72.9\% [70.6, 75.1], F1 0.734 [0.710, 0.755], precision 0.693 [0.670, 0.718] and recall 0.779 [0.746, 0.809]. Table~\ref{tab:individual} uses different protocols, so comparisons are descriptive, not common-test-set comparisons. The gain is nonsignificant (DeLong $z{=}1.235$, $p{=}0.217$~\cite{delong1988}; continuity-corrected McNemar $b{=}47$, $c{=}39$, $\chi^2{=}0.570$, $p{=}0.450$~\cite{mcnemar1947}; $n{=}1520$, $\alpha{=}0.05$). At $\alpha{=}0.1$, conformal coverage is 90.07\%, with 40.3\% uncertain samples.
+\def\idxquad{\hskip 10\p@}
 
-\section{Discussion and Limitations}
-Scores correlate at $r{=}0.232$ (rPPG/Swin-Tiny), $r{=}0.462$ (rPPG/EfficientNet) and $r{=}0.706$ (EfficientNet/Swin), suggesting complementarity but not independence; sample counts, uncertainty and imputation effects are unreported. Xception subgroup AUCs are 0.958 (DeepFakeDetection), 0.897 (Deepfakes), 0.685 (FaceSwap) and 0.675 (FaceShifter), without subgroup counts or CIs.
+\def\@idxitem{\par\hangindent 10\p@}
 
-\subsubsection{Limitations.} Four-stream inference is costly. Low-amplitude (0.1--1\%) rPPG may degrade under compression, occlusion, extreme pose or fewer than 30 clear frames; excluding constant single-segment Welch coherence (1.0) leaves fewer than 117 effective features. Undocumented are the effective rPPG sampling rate/duration; provenance of 1,416 scores across the 80/20 and five-fold splits; degenerate-CHROM safeguards; beta/logit clipping; Pareto-point selection; and conformal calibration/test separation. Physiology-conditioned diffusion may mimic pulse cues. EfficientNet and Xception rely on single-fold estimates without subgroup uncertainty. Without nested or untouched-test validation, aligned-set performance may be optimistic. Coverage differs (1,754 corpus vs. 1,753 Swin videos); missing-score counts, per-dataset/class counts, DFDC sampling, custom-corpus provenance/consent and cross-dataset identity resolution remain unreported. External generalisation and audio are untested.
+\def\subitem{\par\setbox0=\hbox{--\enspace}%
+\noindent\hangindent\wd0\box0}
 
-\section{Conclusion and Future Work}
-On the aligned cohort, three-stream fusion reaches AUC 0.8081 (95\% CI: 0.7856--0.8293), a nonsignificant 0.020 gain over Swin-only (DeLong $p{=}0.217$). Correlations suggest complementarity, not independence. Different cohorts and no independent validation of the full selection pipeline make the result exploratory. Future work includes distillation~\cite{hinton2015distillation}, audio-visual fusion, end-to-end rPPG and nested multi-seed tests on diffusion videos.
+\def\subsubitem{\par\setbox0=\hbox{--\,--\enspace}%
+\noindent\hangindent\wd0\box0}
 
-\begin{credits}
-\subsubsection{\discintname} The authors have no competing interests to declare that are relevant to the content of this article.
-\end{credits}
+\def\indexspace{\par \vskip 10\p@ plus5\p@ minus3\p@\relax}
 
-% The authors have confirmed the competing-interests declaration. Check any venue-specific AI-use disclosure requirement separately.
-% =====================================================================
-\begin{thebibliography}{99}
-\setlength{\itemsep}{0pt}
-\bibitem{goodfellow2014gan} Goodfellow, I., et al.: Generative adversarial nets. NeurIPS 27 (2014)
-\bibitem{ho2020ddpm} Ho, J., Jain, A., Abbeel, P.: Denoising diffusion probabilistic models. NeurIPS 33, 6840--6851 (2020)
-\bibitem{rossler2019ff} R\"ossler, A., et al.: FaceForensics++: Learning to detect manipulated facial images. ICCV, 1--11 (2019)
-\bibitem{li2020celebdf} Li, Y., et al.: Celeb-DF: A large-scale challenging dataset for DeepFake forensics. CVPR, 3207--3216 (2020)
-\bibitem{ciftci2020fakecatcher} Ciftci, U.A., Demir, I., Yin, L.: FakeCatcher: Detection of synthetic portrait videos using biological signals. IEEE Trans. Pattern Anal. Mach. Intell. \textbf{44}(9), 4961--4971 (2022)
-\bibitem{chollet2017xception} Chollet, F.: Xception: Deep learning with depthwise separable convolutions. CVPR, 1251--1258 (2017)
-\bibitem{frank2020leveraging} Frank, J., et al.: Leveraging frequency analysis for deep fake image recognition. ICML, 3247--3258 (2020)
-\bibitem{tan2019efficientnet} Tan, M., Le, Q.V.: EfficientNet: Rethinking model scaling for convolutional neural networks. ICML, 6105--6114 (2019)
-\bibitem{liu2021swin} Liu, Z., et al.: Swin Transformer: Hierarchical vision transformer using shifted windows. ICCV, 10012--10022 (2021)
-\bibitem{wang2020eca} Wang, Q., et al.: ECA-Net: Efficient channel attention for deep convolutional neural networks. CVPR, 11534--11542 (2020)
-\bibitem{qi2020deeprhythm} Qi, H., et al.: DeepRhythm: Exposing deepfakes with attentional visual heartbeat rhythms. ACM Multimedia, 4318--4327 (2020)
-\bibitem{dehaan2013chrom} de Haan, G., Jeanne, V.: Robust pulse rate from chrominance-based rPPG. IEEE Trans. Biomed. Eng. \textbf{60}(10), 2878--2886 (2013)
-\bibitem{wang2017pos} Wang, W., et al.: Algorithmic principles of remote PPG. IEEE Trans. Biomed. Eng. \textbf{64}(7), 1479--1491 (2017)
-\bibitem{guo2017calibration} Guo, C., et al.: On calibration of modern neural networks. ICML, 1321--1330 (2017)
-\bibitem{kull2017beta} Kull, M., Silva Filho, T.M., Flach, P.: Beta calibration: A well-founded and easily implemented improvement on logistic calibration for binary classifiers. AISTATS, 623--631 (2017)
-\bibitem{vovk2005conformal} Vovk, V., Gammerman, A., Shafer, G.: Algorithmic Learning in a Random World. Springer, New York (2005)
-\bibitem{dolhansky2020dfdc} Dolhansky, B., et al.: The DeepFake Detection Challenge (DFDC) dataset. arXiv:2006.07397 (2020)
-\bibitem{kartynnik2019facemesh} Kartynnik, Y., et al.: Real-time facial surface geometry from monocular video on mobile GPUs. arXiv:1907.06724 (2019)
-\bibitem{zhang2016mtcnn} Zhang, K., et al.: Joint face detection and alignment using multitask cascaded convolutional networks. IEEE Signal Process. Lett. \textbf{23}(10), 1499--1503 (2016)
-\bibitem{lachaux1999plv} Lachaux, J.-P., et al.: Measuring phase synchrony in brain signals. Hum. Brain Mapp. \textbf{8}(4), 194--208 (1999)
-\bibitem{butterworth1930} Butterworth, S.: On the theory of filter amplifiers. Wireless Eng. \textbf{7}, 536--541 (1930)
-\bibitem{welch1967} Welch, P.D.: The use of fast Fourier transform for the estimation of power spectra. IEEE Trans. Audio Electroacoust. \textbf{15}(2), 70--73 (1967)
-\bibitem{chen2016xgboost} Chen, T., Guestrin, C.: XGBoost: A scalable tree boosting system. ACM SIGKDD, 785--794 (2016)
-\bibitem{ke2017lightgbm} Ke, G., et al.: LightGBM: A highly efficient gradient boosting decision tree. NeurIPS 30, 3146--3154 (2017)
-\bibitem{wolpert1992stacking} Wolpert, D.H.: Stacked generalization. Neural Netw. \textbf{5}(2), 241--259 (1992)
-\bibitem{hochreiter1997lstm} Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Comput. \textbf{9}(8), 1735--1780 (1997)
-\bibitem{vaswani2017attention} Vaswani, A., et al.: Attention is all you need. NeurIPS 30, 5998--6008 (2017)
-\bibitem{lin2017focal} Lin, T.-Y., et al.: Focal loss for dense object detection. ICCV, 2980--2988 (2017)
-\bibitem{zhang2018mixup} Zhang, H., et al.: mixup: Beyond empirical risk minimization. ICLR (2018)
-\bibitem{izmailov2018swa} Izmailov, P., et al.: Averaging weights leads to wider optima and better generalization. UAI, 876--885 (2018)
-\bibitem{selvaraju2017gradcam} Selvaraju, R.R., et al.: Grad-CAM: Visual explanations from deep networks via gradient-based localization. ICCV, 618--626 (2017)
-\bibitem{shrivastava2016ohem} Shrivastava, A., Gupta, A., Girshick, R.: Training region-based object detectors with online hard example mining. CVPR, 761--769 (2016)
-\bibitem{yun2019cutmix} Yun, S., et al.: CutMix: Regularization strategy to train strong classifiers with localizable features. ICCV, 6023--6032 (2019)
-\bibitem{ahmed1974dct} Ahmed, N., Natarajan, T., Rao, K.R.: Discrete cosine transform. IEEE Trans. Comput. \textbf{C-23}(1), 90--93 (1974)
-\bibitem{vanbuuren2011mice} van Buuren, S., Groothuis-Oudshoorn, K.: mice: Multivariate imputation by chained equations in R. J. Stat. Softw. \textbf{45}(3), 1--67 (2011)
-\bibitem{akiba2019optuna} Akiba, T., et al.: Optuna: A next-generation hyperparameter optimization framework. ACM SIGKDD, 2623--2631 (2019)
-\bibitem{deb2002nsga2} Deb, K., et al.: A fast and elitist multiobjective genetic algorithm: NSGA-II. IEEE Trans. Evol. Comput. \textbf{6}(2), 182--197 (2002)
-\bibitem{loshchilov2019adamw} Loshchilov, I., Hutter, F.: Decoupled weight decay regularization. ICLR (2019)
-\bibitem{delong1988} DeLong, E.R., DeLong, D.M., Clarke-Pearson, D.L.: Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach. Biometrics \textbf{44}(3), 837--845 (1988)
-\bibitem{mcnemar1947} McNemar, Q.: Note on the sampling error of the difference between correlated proportions or percentages. Psychometrika \textbf{12}(2), 153--157 (1947)
-\bibitem{hinton2015distillation} Hinton, G., Vinyals, O., Dean, J.: Distilling the knowledge in a neural network. arXiv:1503.02531 (2015)
-\end{thebibliography}
+\renewenvironment{theindex}
+{\@mkboth{\indexname}{\indexname}%
+\thispagestyle{empty}\parindent\z@
+\parskip\z@ \@plus .3\p@\relax
+\let\item\par
+\def\,{\relax\ifmmode\mskip\thinmuskip
+\else\hskip0.2em\ignorespaces\fi}%
+\normalfont\small
+\begin{multicols}{2}[\@makeschapterhead{\indexname}]%
+}
+{\end{multicols}}
 
-\end{document}
+\renewcommand\footnoterule{%
+\kern-3\p@
+\hrule\@width 2truecm
+\kern2.6\p@}
+\newdimen\fnindent
+\fnindent1em
+\long\def\@makefntext#1{%
+\parindent \fnindent%
+\leftskip \fnindent%
+\noindent
+\llap{\hb@xt@1em{\hss\@makefnmark\ }}\ignorespaces#1}
+
+\long\def\@makecaption#1#2{%
+\small
+\vskip\abovecaptionskip
+\sbox\@tempboxa{{\bfseries #1.} #2}%
+\ifdim \wd\@tempboxa >\hsize
+{\bfseries #1.} #2\par
+\else
+\global \@minipagefalse
+\hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+\fi
+\vskip\belowcaptionskip}
+
+\def\fps@figure{htbp}
+\def\fnum@figure{\figurename\thinspace\thefigure}
+\def\@floatboxreset{%
+\reset@font
+\small
+\@setnobreak
+\@setminipage
+}
+\def\fps@table{htbp}
+\def\fnum@table{\tablename~\thetable}
+\renewenvironment{table}
+{\setlength\abovecaptionskip{0\p@}%
+\setlength\belowcaptionskip{10\p@}%
+\@float{table}}
+{\end@float}
+\renewenvironment{table*}
+{\setlength\abovecaptionskip{0\p@}%
+\setlength\belowcaptionskip{10\p@}%
+\@dblfloat{table}}
+{\end@dblfloat}
+
+\long\def\@caption#1[#2]#3{\par\addcontentsline{\csname
+ext@#1\endcsname}{#1}{\protect\numberline{\csname
+the#1\endcsname}{\ignorespaces #2}}\begingroup
+\@parboxrestore
+\@makecaption{\csname fnum@#1\endcsname}{\ignorespaces #3}\par
+\endgroup}
+
+\newcounter{@inst}
+\newcounter{@auth}
+\newcounter{auco}
+\newdimen\instindent
+\newbox\authrun
+\newtoks\authorrunning
+\newtoks\tocauthor
+\newbox\titrun
+\newtoks\titlerunning
+\newtoks\toctitle
+
+\def\clearheadinfo{\gdef\@author{No Author Given}%
+\gdef\@title{No Title Given}%
+\gdef\@subtitle{}%
+\gdef\@institute{No Institute Given}%
+\gdef\@thanks{}%
+\global\titlerunning={}\global\authorrunning={}%
+\global\toctitle={}\global\tocauthor={}}
+
+\def\institute#1{\gdef\@institute{#1}}
+
+\def\institutename{\par
+\begingroup
+\parskip=\z@
+\parindent=\z@
+\setcounter{@inst}{1}%
+\def\and{\par\stepcounter{@inst}%
+\noindent$^{\the@inst}$\enspace\ignorespaces}%
+\setbox0=\vbox{\def\thanks##1{}\@institute}%
+\ifnum\c@@inst=1\relax
+\gdef\fnnstart{0}%
+\else
+\xdef\fnnstart{\c@@inst}%
+\setcounter{@inst}{1}%
+\noindent$^{\the@inst}$\enspace
+\fi
+\ignorespaces
+\@institute\par
+\endgroup}
+
+\def\@fnsymbol#1{\ensuremath{\ifcase#1\or\star\or{\star\star}\or
+{\star\star\star}\or \dagger\or \ddagger\or
+\mathchar "278\or \mathchar "27B\or \|\or **\or \dagger\dagger
+\or \ddagger\ddagger \else\@ctrerr\fi}}
+
+\def\inst#1{\unskip$^{#1}$}
+\def\orcidID#1{\unskip$^{\mbox{[#1]}}$}
+\def\fnmsep{\unskip$^,$}
+\def\email#1{{\tt#1}}
+
+\AtBeginDocument{\@ifundefined{url}{\def\url#1{#1}}{}%
+\@ifpackageloaded{babel}{%
+\@ifundefined{extrasenglish}{}{\addto\extrasenglish{\switcht@albion}}%
+\@ifundefined{extrasfrenchb}{}{\addto\extrasfrenchb{\switcht@francais}}%
+\@ifundefined{extrasgerman}{}{\addto\extrasgerman{\switcht@deutsch}}%
+\@ifundefined{extrasngerman}{}{\addto\extrasngerman{\switcht@deutsch}}%
+}{\switcht@@therlang}%
+\providecommand{\keywords}[1]{\def\and{{\textperiodcentered} }%
+\par\addvspace\baselineskip
+\noindent\keywordname\enspace\ignorespaces#1}%
+\@ifpackageloaded{hyperref}{%
+\def\doi#1{\href{https://doi.org/\detokenize{#1}}{\url{https://doi.org/#1}}}}{
+\def\doi#1{https://doi.org/\detokenize{#1}}}
+}
+\def\homedir{\~{ }}
+
+\def\subtitle#1{\gdef\@subtitle{#1}}
+\clearheadinfo
+%
+\providecommand*{\toclevel@author}{999}
+\providecommand*{\toclevel@title}{0}
+%
+\renewcommand\maketitle{\newpage
+\phantomsection
+\refstepcounter{chapter}%
+\stepcounter{section}%
+\setcounter{section}{0}%
+\setcounter{subsection}{0}%
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\setcounter{equation}{0}
+\setcounter{footnote}{0}%
+\begingroup
+\parindent=\z@
+\renewcommand\thefootnote{\@fnsymbol\c@footnote}%
+\if@twocolumn
+\ifnum \col@number=\@ne
+\@maketitle
+\else
+\twocolumn[\@maketitle]%
+\fi
+\else
+\newpage
+\global\@topnum\z@
+\@maketitle
+\fi
+\thispagestyle{empty}\@thanks
+%
+\def\\{\unskip\ \ignorespaces}\def\inst##1{\unskip{}}%
+\def\thanks##1{\unskip{}}\def\fnmsep{\unskip}%
+\instindent=\hsize
+\advance\instindent by-\headlineindent
+\if!\the\toctitle!\addcontentsline{toc}{title}{\@title}\else
+\addcontentsline{toc}{title}{\the\toctitle}\fi
+\if@runhead
+\if!\the\titlerunning!\else
+\edef\@title{\the\titlerunning}%
+\fi
+\global\setbox\titrun=\hbox{\small\rm\unboldmath\ignorespaces\@title}%
+\ifdim\wd\titrun>\instindent
+\typeout{Title too long for running head. Please supply}%
+\typeout{a shorter form with \string\titlerunning\space prior to
+\string\maketitle}%
+\global\setbox\titrun=\hbox{\small\rm
+Title Suppressed Due to Excessive Length}%
+\fi
+\xdef\@title{\copy\titrun}%
+\fi
+%
+\if!\the\tocauthor!\relax
+{\def\and{\noexpand\protect\noexpand\and}%
+\def\inst##1{}%
+\def\orcidID##1{}%
+\protected@xdef\toc@uthor{\@author}}%
+\else
+\def\\{\noexpand\protect\noexpand\newline}%
+\protected@xdef\scratch{\the\tocauthor}%
+\protected@xdef\toc@uthor{\scratch}%
+\fi
+\addtocontents{toc}{\noexpand\protect\noexpand\authcount{\the\c@auco}}%
+\addcontentsline{toc}{author}{\toc@uthor}%
+\if@runhead
+\if!\the\authorrunning!
+\value{@inst}=\value{@auth}%
+\setcounter{@auth}{1}%
+\else
+\edef\@author{\the\authorrunning}%
+\fi
+\global\setbox\authrun=\hbox{\def\inst##1{}%
+\def\orcidID##1{}%
+\small\unboldmath\@author\unskip}%
+\ifdim\wd\authrun>\instindent
+\typeout{Names of authors too long for running head. Please supply}%
+\typeout{a shorter form with \string\authorrunning\space prior to
+\string\maketitle}%
+\global\setbox\authrun=\hbox{\small\rm
+Authors Suppressed Due to Excessive Length}%
+\fi
+\xdef\@author{\copy\authrun}%
+\markboth{\@author}{\@title}%
+\fi
+\endgroup
+\setcounter{footnote}{\fnnstart}%
+\clearheadinfo}
+%
+\def\@maketitle{\newpage
+\markboth{}{}%
+\def\lastand{\ifnum\value{@inst}=2\relax
+\unskip{} \andname\
+\else
+\unskip \lastandname\
+\fi}%
+\def\and{\stepcounter{@auth}\relax
+\ifnum\value{@auth}=\value{@inst}%
+\lastand
+\else
+\unskip,
+\fi}%
+\begin{center}%
+\let\newline\\
+{\Large \bfseries\boldmath
+\pretolerance=10000
+\@title \par}\vskip .8cm
+\if!\@subtitle!\else {\large \bfseries\boldmath
+\vskip -.65cm
+\pretolerance=10000
+\@subtitle \par}\vskip .8cm\fi
+\setbox0=\vbox{\setcounter{@auth}{1}\def\and{\stepcounter{@auth}}%
+\def\thanks##1{}\@author}%
+\global\value{@inst}=\value{@auth}%
+\global\value{auco}=\value{@auth}%
+\setcounter{@auth}{1}%
+{\lineskip .5em
+\noindent\ignorespaces
+\@author\vskip.35cm}
+{\small\institutename}
+\end{center}%
+}
+
+\edef\@thmcountersep{}
+\edef\@thmcounterend{.}
+
+\def\spnewtheorem{\@ifstar{\@sthm}{\@Sthm}}
+
+\def\@spnthm#1#2{\@ifnextchar[{\@spxnthm{#1}{#2}}{\@spynthm{#1}{#2}}}
+\def\@Sthm#1{\@ifnextchar[{\@spothm{#1}}{\@spnthm{#1}}}
+
+\def\@spynthm#1#2#3#4{\expandafter\@ifdefinable\csname #1\endcsname
+{\@definecounter{#1}%
+\expandafter\xdef\csname the#1\endcsname{\@thmcounter{#1}}%
+\expandafter\xdef\csname #1name\endcsname{#2}%
+\global\@namedef{#1}{\@spthm{#1}{\csname #1name\endcsname}{#3}{#4}}%
+\global\@namedef{end#1}{\@endtheorem}}}
+
+\def\@spxnthm#1#2[#3]#4#5{\expandafter\@ifdefinable\csname #1\endcsname
+{\@definecounter{#1}\@addtoreset{#1}{#3}%
+\expandafter\xdef\csname the#1\endcsname{\expandafter\noexpand
+\csname the#3\endcsname \noexpand\@thmcountersep \@thmcounter{#1}}%
+\expandafter\xdef\csname #1name\endcsname{#2}%
+\global\@namedef{#1}{\@spthm{#1}{\csname #1name\endcsname}{#4}{#5}}%
+\global\@namedef{end#1}{\@endtheorem}}}
+
+\def\@spothm#1[#2]#3#4#5{%
+\@ifundefined{c@#2}{\@latexerr{No theorem environment `#2' defined}\@eha}%
+{\expandafter\@ifdefinable\csname #1\endcsname
+{\newaliascnt{#1}{#2}%
+\expandafter\xdef\csname #1name\endcsname{#3}%
+\if@envcntsect
+\@addtoreset{#1}{section}
+\fi
+\global\@namedef{#1}{\@spthm{#1}{\csname #1name\endcsname}{#4}{#5}}%
+\global\@namedef{end#1}{\@endtheorem}}}}
+
+\def\@spthm#1#2#3#4{\topsep 7\p@ \@plus2\p@ \@minus4\p@
+\refstepcounter{#1}%
+\@ifnextchar[{\@spythm{#1}{#2}{#3}{#4}}{\@spxthm{#1}{#2}{#3}{#4}}}
+
+\def\@spxthm#1#2#3#4{\@spbegintheorem{#2}{\csname the#1\endcsname}{#3}{#4}%
+\ignorespaces}
+
+\def\@spythm#1#2#3#4[#5]{\@spopargbegintheorem{#2}{\csname
+the#1\endcsname}{#5}{#3}{#4}\ignorespaces}
+
+\def\@spbegintheorem#1#2#3#4{\trivlist
+\item[\hskip\labelsep{#3#1\ #2\@thmcounterend}]#4}
+
+\def\@spopargbegintheorem#1#2#3#4#5{\trivlist
+\item[\hskip\labelsep{#4#1\ #2}]{#4(#3)\@thmcounterend\ }#5}
+
+\def\@sthm#1#2{\@Ynthm{#1}{#2}}
+
+\def\@Ynthm#1#2#3#4{\expandafter\@ifdefinable\csname #1\endcsname
+{\global\@namedef{#1}{\@Thm{\csname #1name\endcsname}{#3}{#4}}%
+\expandafter\xdef\csname #1name\endcsname{#2}%
+\global\@namedef{end#1}{\@endtheorem}}}
+
+\def\@Thm#1#2#3{\topsep 7\p@ \@plus2\p@ \@minus4\p@
+\@ifnextchar[{\@Ythm{#1}{#2}{#3}}{\@Xthm{#1}{#2}{#3}}}
+
+\def\@Xthm#1#2#3{\@Begintheorem{#1}{#2}{#3}\ignorespaces}
+
+\def\@Ythm#1#2#3[#4]{\@Opargbegintheorem{#1}
+{#4}{#2}{#3}\ignorespaces}
+
+\def\@Begintheorem#1#2#3{#3\trivlist
+\item[\hskip\labelsep{#2#1\@thmcounterend}]}
+
+\def\@Opargbegintheorem#1#2#3#4{#4\trivlist
+\item[\hskip\labelsep{#3#1}]{#3(#2)\@thmcounterend\ }}
+
+\if@envcntsect
+\def\@thmcountersep{.}
+\spnewtheorem{theorem}{Theorem}[section]{\bfseries}{\itshape}
+\else
+\spnewtheorem{theorem}{Theorem}{\bfseries}{\itshape}
+\if@envcntreset
+\@addtoreset{theorem}{section}
+\else
+\@addtoreset{theorem}{chapter}
+\fi
+\fi
+
+\spnewtheorem*{claim}{Claim}{\itshape}{\rmfamily}
+\spnewtheorem*{proof}{Proof}{\itshape}{\rmfamily}
+\if@envcntsame
+\def\spn@wtheorem#1#2#3#4{\@spothm{#1}[theorem]{#2}{#3}{#4}}
+\else
+\if@envcntsect
+\def\spn@wtheorem#1#2#3#4{\@spxnthm{#1}{#2}[section]{#3}{#4}}
+\else
+\if@envcntreset
+\def\spn@wtheorem#1#2#3#4{\@spynthm{#1}{#2}{#3}{#4}
+\@addtoreset{#1}{section}}
+\else
+\def\spn@wtheorem#1#2#3#4{\@spynthm{#1}{#2}{#3}{#4}
+\@addtoreset{#1}{chapter}}%
+\fi
+\fi
+\fi
+\spn@wtheorem{case}{Case}{\itshape}{\rmfamily}
+\spn@wtheorem{conjecture}{Conjecture}{\itshape}{\rmfamily}
+\spn@wtheorem{corollary}{Corollary}{\bfseries}{\itshape}
+\spn@wtheorem{definition}{Definition}{\bfseries}{\itshape}
+\spn@wtheorem{example}{Example}{\itshape}{\rmfamily}
+\spn@wtheorem{exercise}{Exercise}{\itshape}{\rmfamily}
+\spn@wtheorem{lemma}{Lemma}{\bfseries}{\itshape}
+\spn@wtheorem{note}{Note}{\itshape}{\rmfamily}
+\spn@wtheorem{problem}{Problem}{\itshape}{\rmfamily}
+\spn@wtheorem{property}{Property}{\itshape}{\rmfamily}
+\spn@wtheorem{proposition}{Proposition}{\bfseries}{\itshape}
+\spn@wtheorem{question}{Question}{\itshape}{\rmfamily}
+\spn@wtheorem{solution}{Solution}{\itshape}{\rmfamily}
+\spn@wtheorem{remark}{Remark}{\itshape}{\rmfamily}
+
+\def\@takefromreset#1#2{%
+\def\@tempa{#1}%
+\let\@tempd\@elt
+\def\@elt##1{%
+\def\@tempb{##1}%
+\ifx\@tempa\@tempb\else
+\@addtoreset{##1}{#2}%
+\fi}%
+\expandafter\expandafter\let\expandafter\@tempc\csname cl@#2\endcsname
+\expandafter\def\csname cl@#2\endcsname{}%
+\@tempc
+\let\@elt\@tempd}
+
+\def\theopargself{\def\@spopargbegintheorem##1##2##3##4##5{\trivlist
+\item[\hskip\labelsep{##4##1\ ##2}]{##4##3\@thmcounterend\ }##5}
+\def\@Opargbegintheorem##1##2##3##4{##4\trivlist
+\item[\hskip\labelsep{##3##1}]{##3##2\@thmcounterend\ }}
+}
+
+\renewenvironment{abstract}{%
+\list{}{\advance\topsep by0.35cm\relax\small
+\leftmargin=1cm
+\labelwidth=\z@
+\listparindent=\z@
+\itemindent\listparindent
+\rightmargin\leftmargin}\item[\hskip\labelsep
+\bfseries\abstractname]}
+{\endlist}
+
+\newdimen\headlineindent
+\headlineindent=1.166cm
+
+\def\ps@headings{\let\@mkboth\@gobbletwo
+\let\@oddfoot\@empty\let\@evenfoot\@empty
+\def\@evenhead{\normalfont\small\rlap{\thepage}\hspace{\headlineindent}%
+\leftmark\hfil}
+\def\@oddhead{\normalfont\small\hfil\rightmark\hspace{\headlineindent}%
+\llap{\thepage}}
+\def\chaptermark##1{}%
+\def\sectionmark##1{}%
+\def\subsectionmark##1{}}
+
+\def\ps@titlepage{\let\@mkboth\@gobbletwo
+\let\@oddfoot\@empty\let\@evenfoot\@empty
+\def\@evenhead{\normalfont\small\rlap{\thepage}\hspace{\headlineindent}%
+\hfil}
+\def\@oddhead{\normalfont\small\hfil\hspace{\headlineindent}%
+\llap{\thepage}}
+\def\chaptermark##1{}%
+\def\sectionmark##1{}%
+\def\subsectionmark##1{}}
+
+\if@runhead\ps@headings\else
+\ps@empty\fi
+
+\setlength\arraycolsep{1.4\p@}
+\setlength\tabcolsep{1.4\p@}
+
+\endinput
