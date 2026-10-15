@@ -44,16 +44,16 @@
 \title{NeuroPulse: Orthogonal Four-Stream Deepfake Video Detection via Haemodynamic Signal Analysis, Depthwise-Separable Spatio-Temporal Dual-Branch Attention, and Hierarchical Shifted-Window Transformer Late-Fusion Ensemble}
 \titlerunning{NeuroPulse: Four-Stream Deepfake Detection}
 
-\author{Vasireddy Likhith Chowdary\orcidID{0009-0000-5291-8452}\thinspace\Envelope \and
-        Raushan Kumar Singh \and
-        G. Lalith Sathvik \and
-        T. Dheeraj \and
-        V. Siva Nikshya \and
-        K. Tejaswini}
+\author{Vasireddy~Likhith~Chowdary\orcidID{0009-0000-5291-8452}\thinspace\textsuperscript{\Envelope} \and \\
+        Raushan~Kumar~Singh\orcidID{0000-0001-5931-3368} \and
+        Gaddam~Lalith~Sathvik \and \\
+        Thirunala~Dheeraj \and
+        Vishnumolakala~Siva~Nikshya \and
+        Katta~Tejaswini}
 
 \authorrunning{V. L. Chowdary et al.}
 
-\institute{Department of CSE, SRM University-AP, Amaravati, India\\
+\institute{Department of Computer Science and Engineering, SRM University-AP, Amaravati, India\\
 \email{\{likhithchowdary\_vasireddy,\allowbreak{}raushankumar.s,\allowbreak{}lalithsathvik\_gaddam,\allowbreak{}dheeraj\_thirunala,\allowbreak{}sivanikshya\_vishnumolakala,\allowbreak{}tejaswi\_katta\}@srmap.edu.in}}
 
 \maketitle
@@ -75,7 +75,7 @@ FaceForensics++~\cite{chollet2017xception,rossler2019ff}, Celeb-DF~\cite{li2020c
 % =====================================================================
 \section{Framework, Data and Pre-Processing}
 \subsection{Four-Stream Architecture and Complementarity}
-NeuroPulse exploits complementary failure modes: compression attenuates spatial artefacts while preserving low-frequency (0.7--4.0\,Hz) pulse phase coherence, whereas high-fidelity rendering may defeat spatial detectors yet lack coherent bilateral rPPG. Each stream $i\in\{1,\dots,4\}$ emits a fake score $p_i\in[0,1]$ for late fusion (Fig.~\ref{fig:overview}).
+NeuroPulse exploits complementary failure modes: compression attenuates spatial artefacts while preserving low-frequency (0.7--4.0\,Hz) pulse phase coherence, whereas high-fidelity rendering may defeat spatial detectors yet lack coherent bilateral rPPG. Each stream $i\in\{1,\dots,4\}$ emits a forgery score $p_i\in[0,1]$ for late fusion (Fig.~\ref{fig:overview}).
 
 \begin{figure}[!t]
 \centering
@@ -149,7 +149,7 @@ A 2-layer bidirectional LSTM~\cite{hochreiter1997lstm} models temporal boundary 
 \overleftarrow{\bh}_t=\mathrm{LSTM}_{\mathrm{bwd}}(\mathbf f_t,\overleftarrow{\bh}_{t+1}),\\
 \bh_t&=[\overrightarrow{\bh}_t;\overleftarrow{\bh}_t]\in\R^{512}.
 \end{align}
-A 4-head self-attention layer~\cite{vaswani2017attention} with key-padding mask $m_t\in\{0,1\}$ weights transient manipulation frames. Residual LayerNorm outputs $\mathbf a_t$ feed masked average pooling to produce the 512-d video representation:
+A 4-head self-attention layer~\cite{vaswani2017attention} ($d_k{=}128$) with key-padding mask $m_t\in\{0,1\}$ weights transient manipulation frames. Residual LayerNorm outputs $\mathbf a_t$ feed masked average pooling to produce the 512-d video representation:
 \begin{align}
 \mathrm{head}_h&=\softmax\!\left(\frac{\mathbf Q\mathbf W^{Q}_h(\mathbf K\mathbf W^{K}_h)^{\top}}{\sqrt{d_k}}\right)\mathbf V\mathbf W^{V}_h,\\
 \mathrm{MHA}&=[\mathrm{head}_1;\dots;\mathrm{head}_4]\,\mathbf W^{O},\qquad
@@ -209,7 +209,7 @@ k&=\mathrm{odd}\!\left(\left\lceil\frac{\log_2 C+1}{2}\right\rceil\right),\\
 \end{align}
 For $C{=}2048$, $k{=}7$. A parallel \emph{global channel-abstraction branch} projects $\hat{\bF}$ via a LayerNorm--Linear--GELU bottleneck to capture static channel co-occurrence ($\bz_{\mathrm{freq}}\in\R^{256}$) alongside the temporal BiLSTM+MHA pathway ($\bz_{\mathrm{temporal}}\in\R^{512}$):
 \begin{align}
-\bz_{\mathrm{freq}}&=\mathrm{LN}\bigl(\mathrm{Linear}_{256}(\mathrm{GELU}(\mathrm{LN}(\mathrm{Linear}_{256}(\mathrm{GAP}(\hat{\bF}))))))\in\R^{256},\\
+\bz_{\mathrm{freq}}&=\mathrm{LN}\bigl(\mathrm{Linear}_{256}(\mathrm{GELU}(\mathrm{LN}(\mathrm{Linear}_{256}(\mathrm{GAP}(\hat{\bF})))))\bigr)\in\R^{256},\\
 \bz_{\mathrm{fused}}&=[\bz_{\mathrm{temporal}};\,\bz_{\mathrm{freq}}]\in\R^{768}.
 \end{align}
 The classifier head is an MLP ($768{\to}256{\to}128{\to}1$; dropout 0.3, 0.15). Focal weights are computed per fold. From epoch 10, online hard-example mining~\cite{shrivastava2016ohem} scores boundary proximity $h_i\in[0,1]$; a class-normalised sampler refreshed every 5 epochs oversamples hard sequences with $h_i\approx1$:
@@ -246,9 +246,9 @@ The mixed target is $\tilde y=\lambda_{\mathrm{adj}}y_i+(1-\lambda_{\mathrm{adj}
 \section{Stream IV: Hierarchical Swin Transformer with DCT Branch}
 Swin-Tiny~\cite{liu2021swin} (patch size 4, $M{=}7$ windows) applies attention within non-overlapping $M{\times}M$ windows, reducing complexity from $O(N^2)$ to $O(NM^2)$ for $N$ patches. Alternating shifted windows connect boundaries across hierarchical maps at $\tfrac H4{\times}\tfrac W4$, $\tfrac H8{\times}\tfrac W8$, $\tfrac H{16}{\times}\tfrac W{16}$, and $\tfrac H{32}{\times}\tfrac W{32}$, capturing multi-scale cues and border-spanning blending discontinuities. Each block computes
 \begin{equation}
-\text{W-MSA}(\mathbf Q,\mathbf K,\mathbf V)=\softmax\!\left(\frac{\mathbf Q\mathbf K^{\top}}{\sqrt d}+B\right)\mathbf V,
+\mathrm{W\text{-}MSA}(\mathbf Q,\mathbf K,\mathbf V)=\softmax\!\left(\frac{\mathbf Q\mathbf K^{\top}}{\sqrt d}+B\right)\mathbf V,
 \end{equation}
-with learnable relative position bias $B$. To prevent zero-padding from skewing normalisation statistics, padded frames bypass the backbone:
+with learnable relative position bias $B\in\R^{M^2\times M^2}$. To prevent zero-padding from skewing normalisation statistics, padded frames bypass the backbone:
 \begin{equation}
 \mathbf s_t=\begin{cases}\mathrm{Swin}(\bx_t)&m_t=1,\\ \mathbf 0&m_t=0.\end{cases}
 \end{equation}
@@ -269,7 +269,7 @@ A two-layer MLP encodes $\mathbf f_{\mathrm{DCT}}$ into a 192-d spectral embeddi
 \ell_b&=\sum_{t=1}^{T}m_{b,t},\qquad\forall b\in[B],\\
 \bz&=[\bz_{\mathrm{temporal}}^{512};\,\bz_{\mathrm{freq}}^{192}],
 \end{align}
-followed by 4-head attention and an MLP head ($704{\to}192{\to}96{\to}1$). Training sequence length follows a progressive curriculum (validation uses all 16 frames):
+where 4-head attention pools BiLSTM states before the MLP head ($704{\to}192{\to}96{\to}1$). Training sequence length follows a progressive curriculum (validation uses all 16 frames):
 \begin{equation}
 T_{\mathrm{train}}(e)=\begin{cases}5&e\in[0,4],\\10&e\in[5,14],\\16&e\ge15.\end{cases}
 \end{equation}
@@ -346,7 +346,7 @@ IV\ \ Swin-Tiny + DCT (OOF) & 0.789 & 71.8\% & 0.721 & 0.714 & 0.284\\
 \midrule
 Swin only (baseline) & 0.788 & 0.728\\
 Simple average / logit-space average & 0.802 & 0.715 / 0.716\\
-AUC-weighted / normalized-AUC weights & 0.804 / 0.803 & 0.713 / 0.714\\
+AUC-weighted / normalised-AUC weights & 0.804 / 0.803 & 0.713 / 0.714\\
 Rank-based & 0.787 & ---\\
 Meta-learner LR (OOF) & 0.804 & 0.717\\
 \textbf{Optuna multi-objective + $\Tcal{=}0.711$} & \textbf{0.8081} & \textbf{0.734}\\
@@ -356,7 +356,7 @@ Meta-learner LR (OOF) & 0.804 & 0.717\\
 \end{table}
 
 \subsubsection{Results.}
-On the aligned cohort ($n{=}1,520$; Table~\ref{tab:ablation}), every probability-space fusion method outperforms the Swin-only baseline (0.788 AUC). Optuna NSGA-II + $\Tcal{=}0.711$ achieves the best metrics: AUC reaches \textbf{0.8081} ($+0.0201$ gain; 95\% CI: $[0.786, 0.829]$), accuracy \textbf{72.9\%} $[70.6, 75.1]$, F1 \textbf{0.734} $[0.710, 0.755]$, precision \textbf{0.693} $[0.670, 0.718]$, and recall \textbf{0.779} $[0.746, 0.809]$. Paired tests against Swin-only give DeLong $z{=}1.235$ ($p{=}0.217$)~\cite{delong1988} and continuity-corrected McNemar $\chi^2{=}0.570$ ($b{=}47,c{=}39,p{=}0.450$)~\cite{mcnemar1947}. At $\alpha{=}0.10$, split-conformal prediction achieves \textbf{90.07\%} coverage (target $\ge 90.0\%$), routing 40.3\% of uncertain videos to $\mathcal C(x){=}\{0,1\}$ for audit.
+Tables~\ref{tab:individual} and~\ref{tab:ablation} summarise stream and fusion performance; on the aligned cohort ($n{=}1,520$), every probability-space fusion method outperforms the Swin-only baseline (0.788 AUC). Optuna NSGA-II + $\Tcal{=}0.711$ achieves the best metrics: AUC reaches \textbf{0.8081} ($+0.0201$ gain; 95\% CI: $[0.786, 0.829]$), accuracy \textbf{72.9\%} $[70.6, 75.1]$, F1 \textbf{0.734} $[0.710, 0.755]$, precision \textbf{0.693} $[0.670, 0.718]$, and recall \textbf{0.779} $[0.746, 0.809]$. Paired tests against Swin-only give DeLong $z{=}1.235$ ($p{=}0.217$)~\cite{delong1988} and continuity-corrected McNemar $\chi^2{=}0.570$ ($b{=}47,c{=}39,p{=}0.450$)~\cite{mcnemar1947}. At $\alpha{=}0.10$, split-conformal prediction achieves \textbf{90.07\%} coverage (target $\ge 90.0\%$), routing 40.3\% of uncertain videos to $\mathcal C(x){=}\{0,1\}$ for audit.
 
 \section{Architectural Complexity and Cross-Stream Synergy}
 Calibrated stream scores correlate at $r{=}0.232$ (rPPG/Swin-Tiny), $r{=}0.462$ (rPPG/EfficientNet-B4), and $r{=}0.706$ (EfficientNet-B4/Swin-Tiny), confirming that narrowband (0.7--4.0\,Hz) chrominance phase coherence and $O(NM^2)$ shifted-window spatial-spectral tokens yield largely decorrelated residuals. Across manipulation families, Stream~III (Xception+ECA) excels on full-scene synthesis (DeepFakeDetection AUC 0.958) and autoencoder Deepfakes (0.897) via depthwise-separable boundary isolation, whereas graphics-based FaceSwap (0.685) and occlusion-aware FaceShifter (0.675) preserve skin texture and rely on Stream~I's pulse coherence and Stream~IV's global attention.
